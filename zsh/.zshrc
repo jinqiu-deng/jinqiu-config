@@ -16,7 +16,7 @@ export TZ=/usr/share/zoneinfo/Asia/Shanghai
 
 export PATH="/usr/local/opt/mysql-client/bin:$PATH"
 export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-export PATH="/Users/dengjinqiu/opt/anaconda3/bin:$PATH"
+# export PATH="/Users/dengjinqiu/opt/anaconda3/bin:$PATH"  # commented out by conda initialize
 export PATH="/usr/local/bin:$PATH"
 
 export JAVA_HOME=$(/usr/libexec/java_home)
@@ -72,6 +72,8 @@ ZSH_THEME="bullet-train"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git vim-mode vi-mode zsh-autosuggestions)
+plugins+=( zsh-syntax-highlighting )
+
 
 source $ZSH/oh-my-zsh.sh
 

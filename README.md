@@ -16,4 +16,15 @@ export LD_LIBRARY_PATH="$HOME/.local/lib64:$HOME/.local/lib:$LD_LIBRARY_PATH"
 export PATH="$HOME/.local/bin:$PATH"
 exec zsh -l
 
+stow
+下载并解压，进入对应目录 https://ftp.gnu.org/gnu/stow/stow-2.4.1.tar.gz
 
+
+./configure --prefix=$HOME/.local
+make
+make install
+
+配置zshrc
+bullet train的 theme在oh-my-shell下
+
+需要在每台机器单独运行 conda init zsh，把钩子写入zshrc
