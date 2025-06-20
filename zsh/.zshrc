@@ -133,14 +133,25 @@ precmd() {
   fi
 }
 
-# 然后根据本地/远程，给用户名@主机名上色，并设置整个提示符
-if [[ -n $SSH_CONNECTION ]]; then
-  # 远程：host 字段红，其他字段用默认色
-  PROMPT='%F{red}%n@%m%f %1~ %# '
-else
-  # 本地：host 字段绿
-  PROMPT='%F{green}%n@%m%f %1~ %# '
-fi
+# ---------- 覆盖 Bullet Train 的 “host” 段 -------------
+# 这段代码会替换主题里原本绘制主机名的小函数
+function bullettrain_prompt_host() {
+  local fg='%F{white}'
+  local bg
+
+  if [[ -n $SSH_CONNECTION ]]; then
+    bg='%K{red}'    # 远程 SSH 就红底
+  else
+    bg='%K{green}'  # 本地就绿底
+  fi
+
+  # 你看看主题里原来是怎样画 icon 的，这里以  为例，可按需改
+  local icon='龎'
+
+  # 打印：<背景色><前景白> icon 空格 主机名 空格 <重置>
+  print -n "${bg}${fg} ${icon} %m ${reset_color}"
+}
+# --------------------------------------------------------
 
 
 # >>> conda initialize >>>
