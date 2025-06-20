@@ -119,6 +119,30 @@ bindkey -M vicmd 'k' history-substring-search-up
 bindkey -M vicmd 'j' history-substring-search-down
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=6'
 
+# 加载颜色支持
+autoload -Uz colors && colors
+
+# 在每次显示 prompt 之前，切换光标颜色
+precmd() {
+  if [[ -n $SSH_CONNECTION ]]; then
+    # 远程：光标红
+    printf '\033]12;#FF5555\007'
+  else
+    # 本地：光标绿
+    printf '\033]12;#55FF55\007'
+  fi
+}
+
+# 然后根据本地/远程，给用户名@主机名上色，并设置整个提示符
+if [[ -n $SSH_CONNECTION ]]; then
+  # 远程：host 字段红，其他字段用默认色
+  PROMPT='%F{red}%n@%m%f %1~ %# '
+else
+  # 本地：host 字段绿
+  PROMPT='%F{green}%n@%m%f %1~ %# '
+fi
+
+
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
 __conda_setup="$('/Users/dengjinqiu/opt/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
