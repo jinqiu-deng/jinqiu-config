@@ -48,4 +48,4 @@ ln -s "$(pwd)/nvim-linux-x86_64.appimage" ~/.local/bin/nvim
 都放到 ~/.local/share/nvim/site/pack/jinqiu/start/v
 
 ssh 端粘贴到系统剪切板
-只用纯终端的 OSC52+DCS 就能搞定跨 SSH、tmux 的剪贴板同步使用vim-oscyank
+远程的剪切板和本地隔离, 通过OSC52可以将远程的内容同步到本地，但没找到把本地同步到远程的方法。本地复制的内容只能ctrl+V到远程

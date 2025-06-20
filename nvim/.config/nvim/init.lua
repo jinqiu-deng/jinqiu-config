@@ -28,21 +28,24 @@ require('gitsigns').setup {
   end,
 }
 
--- 让 Vim 所有复制/粘贴都用系统剪贴板
-vim.keymap.set({'n', 'v'}, 'y', '"+y', { noremap = true })
-vim.keymap.set({'n', 'v'}, 'd', '"+d', { noremap = true })
-vim.keymap.set({'n', 'v'}, 'c', '"+c', { noremap = true })
-vim.keymap.set({'n', 'v'}, 'p', '"+p', { noremap = true })
-vim.keymap.set({'n', 'v'}, 'P', '"+P', { noremap = true })
-
--- ------------ vim-oscyank: OSC52 远程剪贴板 -------------------
--- vim.g.clipboard = 'osc52'
--- vim.api.nvim_create_augroup('YankToClipboard', {clear=true})
--- vim.api.nvim_create_autocmd('TextYankPost', {
---   group = 'YankToClipboard',
---   pattern = '*',
---   command = 'silent! OSCYankReg 0'
--- })
+-- 根据 SSH 连接状态，切换本地/远程剪贴板配置
+if vim.env.SSH_CONNECTION == nil then
+  -- 本地环境：所有复制/粘贴走系统剪贴板
+  vim.keymap.set({'n', 'v'}, 'y', '"+y', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'v'}, 'd', '"+d', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'v'}, 'c', '"+c', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'v'}, 'p', '"+p', { noremap = true, silent = true })
+  vim.keymap.set({'n', 'v'}, 'P', '"+P', { noremap = true, silent = true })
+else
+  -- 远程 SSH：使用 OSC52 推送到本地剪贴板
+  vim.g.clipboard = 'osc52'
+  vim.api.nvim_create_augroup('YankToClipboard', { clear = true })
+  vim.api.nvim_create_autocmd('TextYankPost', {
+    group   = 'YankToClipboard',
+    pattern = '*',
+    command = 'silent! OSCYankReg +'
+  })
+end
 
 -- ------------ 基础设置 ----------------------------------------
 vim.opt.filetype = 'on'
