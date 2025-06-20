@@ -9,6 +9,7 @@
 make
 make install
 它可以把当前文件通过link同步到合适的位置
+在远程要把git关掉要不太慢 git config --global oh-my-zsh.hide-status 1
 
 远程安装 zshell
 查看本机系统，找到对应的安装包，并安装在home/local下, 避免sudo权限问题
