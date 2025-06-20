@@ -27,14 +27,11 @@ export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bott
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 #
 # theme bullet-train
-# 先定义默认值（本地）
-export BT_HOST_BG='green'
-export BT_HOST_FG='white'
-
 # 如果是 SSH 会话，覆盖成红色背景
 if [[ -n $SSH_CONNECTION ]]; then
-  export BT_HOST_BG='red'
-  export BT_HOST_FG='white'
+  export BULLETTRAIN_IS_SSH_CLIENT=1
+  export BULLETTRAIN_CONTEXT_BG=red
+  export BULLETTRAIN_CONTEXT_FG=white
 fi
 
 ZSH_THEME="bullet-train"
@@ -91,6 +88,10 @@ plugins=(
 )
 
 source $ZSH/oh-my-zsh.sh
+# 直接把 context() 重写，只显示 hostname
+context() {
+  echo -n "$BULLETTRAIN_CONTEXT_HOSTNAME"
+}
 
 # User configuration
 
@@ -131,17 +132,6 @@ ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=6'
 
 # 加载颜色支持
 autoload -Uz colors && colors
-
-# 在每次显示 prompt 之前，切换光标颜色
-precmd() {
-  if [[ -n $SSH_CONNECTION ]]; then
-    # 远程：光标红
-    printf '\033]12;#FF5555\007'
-  else
-    # 本地：光标绿
-    printf '\033]12;#55FF55\007'
-  fi
-}
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
