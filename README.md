@@ -28,3 +28,11 @@ make install
 bullet train的 theme在oh-my-shell下
 
 需要在每台机器单独运行 conda init zsh，把钩子写入zshrc
+
+
+zsh 插件
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git zsh-syntax-highlighting
+放到 .oh-my-zsh/custom/plugins
+注意先把 .git删了
+在.zshrc中加入
+plugins+=( zsh-syntax-highlighting )
