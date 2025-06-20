@@ -30,8 +30,8 @@ export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bott
 # 如果是 SSH 会话，覆盖成红色背景
 if [[ -n $SSH_CONNECTION ]]; then
   export BULLETTRAIN_IS_SSH_CLIENT=1
-  export BULLETTRAIN_CONTEXT_BG=red
-  export BULLETTRAIN_CONTEXT_FG=white
+  export BULLETTRAIN_CONTEXT_BG=216
+  export BULLETTRAIN_CONTEXT_FG=0
 fi
 
 ZSH_THEME="bullet-train"
@@ -123,8 +123,32 @@ context() {
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 # alias vim='nvim'
 
-# use vi mode
+# 开启 vi 模式
 bindkey -v
+
+# 1) 定义一个 ZLE 钩子函数，根据当前 keymap 切换光标
+function zle-keymap-select {
+  case $KEYMAP in
+    vicmd)  # Normal 模式，用方块
+      echo -ne '\e[2 q'
+      ;;
+    viins|main)  # Insert 模式，用竖线
+      echo -ne '\e[6 q'
+      ;;
+  esac
+  # 重绘 prompt，确保新光标生效
+  zle reset-prompt
+}
+# 把上面的函数关联给 zle
+zle -N zle-keymap-select
+
+# 2) 在每次新的 line 编辑开始时也触发一次（比如刚打开 shell）
+function zle-line-init {
+  zle-keymap-select
+}
+zle -N zle-line-init
+
+
 bindkey '^n' autosuggest-accept
 bindkey -M vicmd 'k' history-substring-search-up
 bindkey -M vicmd 'j' history-substring-search-down
