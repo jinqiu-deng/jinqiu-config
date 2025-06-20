@@ -3,14 +3,14 @@
 
 思路，先安装tmux zshell nvim，再通过stow配置
 
-安装stow
+远程安装stow
 下载并解压，进入对应目录 https://ftp.gnu.org/gnu/stow/stow-2.4.1.tar.gz
 ./configure --prefix=$HOME/.local
 make
 make install
 它可以把当前文件通过link同步到合适的位置
 
-安装 zshell
+远程安装 zshell
 查看本机系统，找到对应的安装包，并安装在home/local下, 避免sudo权限问题
 下载并解压，进入对应目录 https://sourceforge.net/projects/zsh/files/zsh/
 运行 ./Util/preconfig
@@ -35,3 +35,10 @@ git clone https://github.com/zsh-users/zsh-syntax-highlighting.git zsh-syntax-hi
 plugins+=( zsh-syntax-highlighting )
 
 安装tmux
+只需要在本地电脑安装，配置文件是.tmux.conf
+
+
+远程安装neovim
+https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.appimage
+chmod u+x nvim-linux-x86_64.appimage
+ln -s "$(pwd)/nvim-linux-x86_64.appimage" ~/.local/bin/nvim
