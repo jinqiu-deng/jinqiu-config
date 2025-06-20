@@ -121,7 +121,7 @@ context() {
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
-# alias vim='nvim'
+alias vim='nvim'
 
 # 开启 vi 模式
 bindkey -v
