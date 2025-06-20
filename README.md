@@ -39,7 +39,13 @@ plugins+=( zsh-syntax-highlighting )
 只需要在本地电脑安装，配置文件是.tmux.conf
 
 
-远程安装neovim
+远程安装nvim
 https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.appimage
 chmod u+x nvim-linux-x86_64.appimage
 ln -s "$(pwd)/nvim-linux-x86_64.appimage" ~/.local/bin/nvim
+
+安装nvim插件
+都放到 ~/.local/share/nvim/site/pack/jinqiu/start/v
+
+ssh 端粘贴到系统剪切板
+只用纯终端的 OSC52+DCS 就能搞定跨 SSH、tmux 的剪贴板同步使用vim-oscyank
