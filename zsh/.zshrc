@@ -71,9 +71,14 @@ ZSH_THEME="bullet-train"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git vim-mode vi-mode )
-plugins+=( zsh-syntax-highlighting )
-plugins+=( zsh-autosuggestions )
+plugins=(
+    git
+    vim-mode
+    vi-mode
+    zsh-syntax-highlighting
+    zsh-autosuggestions
+    zsh-history-substring-search
+)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -110,7 +115,8 @@ source $ZSH/oh-my-zsh.sh
 # use vi mode
 bindkey -v
 bindkey '^n' autosuggest-accept
-
+bindkey -M vicmd 'k' history-substring-search-up
+bindkey -M vicmd 'j' history-substring-search-down
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=6'
 
 # >>> conda initialize >>>
