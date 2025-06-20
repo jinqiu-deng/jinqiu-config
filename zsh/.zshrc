@@ -27,6 +27,16 @@ export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bott
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 #
 # theme bullet-train
+# 先定义默认值（本地）
+export BT_HOST_BG='green'
+export BT_HOST_FG='white'
+
+# 如果是 SSH 会话，覆盖成红色背景
+if [[ -n $SSH_CONNECTION ]]; then
+  export BT_HOST_BG='red'
+  export BT_HOST_FG='white'
+fi
+
 ZSH_THEME="bullet-train"
 
 # Uncomment the following line to use case-sensitive completion.
@@ -132,27 +142,6 @@ precmd() {
     printf '\033]12;#55FF55\007'
   fi
 }
-
-# ---------- 覆盖 Bullet Train 的 “host” 段 -------------
-# 这段代码会替换主题里原本绘制主机名的小函数
-function bullettrain_prompt_host() {
-  local fg='%F{white}'
-  local bg
-
-  if [[ -n $SSH_CONNECTION ]]; then
-    bg='%K{red}'    # 远程 SSH 就红底
-  else
-    bg='%K{green}'  # 本地就绿底
-  fi
-
-  # 你看看主题里原来是怎样画 icon 的，这里以  为例，可按需改
-  local icon='龎'
-
-  # 打印：<背景色><前景白> icon 空格 主机名 空格 <重置>
-  print -n "${bg}${fg} ${icon} %m ${reset_color}"
-}
-# --------------------------------------------------------
-
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
