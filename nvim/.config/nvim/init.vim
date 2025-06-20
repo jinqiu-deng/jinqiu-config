@@ -1,33 +1,37 @@
 " Neovim 配置文件: ~/.config/nvim/init.vim
 
-" ----------------------------------------
-" 插件管理: vim-plug
-call plug#begin('~/.local/share/nvim/plugged')
+" ------------------------------------------------
+" 插件管理：使用 Neovim 原生 package 机制
+" 插件目录：~/.local/share/nvim/site/pack/jinqiu/start/*
+"            ~/.local/share/nvim/site/pack/jinqiu/opt/*
+"
+" cd ~/.local/share/nvim/site/pack/jinqiu/start
+" git clone https://github.com/Raimondi/delimitMate.git
+" git clone https://github.com/Yggdroot/indentLine.git
+" git clone https://github.com/altercation/vim-colors-solarized.git
+" git clone https://github.com/christoomey/vim-tmux-navigator.git
+" git clone https://github.com/ctrlpvim/ctrlp.vim.git
+" git clone https://github.com/airblade/vim-rooter.git
+" git clone https://github.com/easymotion/vim-easymotion.git
+" git clone https://github.com/godlygeek/tabular.git
+" git clone https://github.com/majutsushi/tagbar.git
+" git clone https://github.com/mhinz/vim-startify.git
+" git clone https://github.com/ntpeters/vim-better-whitespace.git
+" git clone https://github.com/preservim/nerdcommenter.git
+" git clone https://github.com/preservim/nerdtree.git
+" git clone https://github.com/sjl/vitality.vim.git      # 如果要延迟加载可放 opt/
+" git clone https://github.com/lewis6991/gitsigns.nvim.git
+" git clone https://github.com/vim-airline/vim-airline.git
+" git clone https://github.com/vim-airline/vim-airline-themes.git
+" git clone https://github.com/vim-syntastic/syntastic.git
+" git clone https://github.com/xolox/vim-misc.git
+" git clone https://github.com/kana/vim-arpeggio.git
+" git clone https://github.com/elzr/vim-json.git
+" git clone https://github.com/mbbill/undotree.git
+" ------------------------------------------------
 
-Plug 'Raimondi/delimitMate'
-Plug 'Yggdroot/indentLine'
-Plug 'altercation/vim-colors-solarized'
-Plug 'christoomey/vim-tmux-navigator'
-Plug 'ctrlpvim/ctrlp.vim'
-Plug 'airblade/vim-rooter'
-Plug 'easymotion/vim-easymotion'
-Plug 'godlygeek/tabular'
-Plug 'majutsushi/tagbar'
-Plug 'mhinz/vim-startify'
-Plug 'ntpeters/vim-better-whitespace'
-Plug 'preservim/nerdcommenter'
-Plug 'preservim/nerdtree'
-Plug 'sjl/vitality.vim', { 'on': 'Vitality' }
-Plug 'lewis6991/gitsigns.nvim'
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
-Plug 'vim-syntastic/syntastic'
-Plug 'xolox/vim-misc'
-Plug 'kana/vim-arpeggio'
-Plug 'elzr/vim-json'
-Plug 'mbbill/undotree'
-
-call plug#end()
+" （如果有 opt 插件需要按需加载，写在这里）
+" packadd vitality.vim
 
 " ------------ gitsigns.nvim 配置 ------------
 lua << EOF
