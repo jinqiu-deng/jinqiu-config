@@ -28,6 +28,7 @@
 " git clone https://github.com/kana/vim-arpeggio.git
 " git clone https://github.com/elzr/vim-json.git
 " git clone https://github.com/mbbill/undotree.git
+" git clone https://github.com/ojroques/vim-oscyank.git
 " ------------------------------------------------
 
 " （如果有 opt 插件需要按需加载，写在这里）
@@ -69,6 +70,13 @@ require('gitsigns').setup {
   end,
 }
 EOF
+
+
+" 每次 yank（y/yy/visual y）后自动调用 OSCYankReg +（使用 "+ 寄存器）
+augroup YankToClipboard
+  autocmd!
+  autocmd TextYankPost * silent! OSCYankReg +
+augroup END
 
 " ----------------------------------------
 " 基础设置
