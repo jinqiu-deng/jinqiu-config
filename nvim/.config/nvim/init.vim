@@ -71,11 +71,14 @@ require('gitsigns').setup {
 }
 EOF
 
+" 强制启用 OSC52 剪贴板
+let g:clipboard = 'osc52'
 
+" init.vim 中的 OSC52 自动 yank 配置
 " 每次 yank（y/yy/visual y）后自动调用 OSCYankReg +（使用 "+ 寄存器）
 augroup YankToClipboard
   autocmd!
-  autocmd TextYankPost * silent! OSCYankReg +
+  autocmd TextYankPost * silent! OSCYankReg 0
 augroup END
 
 " ----------------------------------------
