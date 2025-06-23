@@ -81,6 +81,18 @@ vim.opt.background = 'dark'
 vim.cmd('colorscheme solarized')
 vim.cmd('highlight clear SignColumn')
 
+-- 不自动加注释前缀，确保在 filetype plugin indent on 之后
+vim.api.nvim_create_augroup('NoCommentContinuation', { clear = true })
+vim.api.nvim_create_autocmd('FileType', {
+  group = 'NoCommentContinuation',
+  pattern = '*',
+  callback = function()
+    -- 按 <Enter> 或 o/O 时都不要自动延续注释前缀
+    vim.opt_local.formatoptions:remove('r')
+    vim.opt_local.formatoptions:remove('o')
+  end,
+})
+
 -- ------------ 窗口跳转（支持tmux） ----------------------------
 vim.keymap.set('n', '<C-J>', '<C-W>j')
 vim.keymap.set('n', '<C-K>', '<C-W>k')
@@ -171,5 +183,56 @@ vim.g.rooter_silent_chdir = 1
 -- ------------ vim-json: JSON 支持 -----------------------------
 vim.g.vim_json_syntax_conceal = 0
 
--- ------------ delimitMate: 自动补全括号 -----------------------
--- 插件无需特别配置
+-- ------------ iron -----------------------------
+local iron = require("iron.core")
+local view = require("iron.view")
+local common = require("iron.fts.common")
+
+iron.setup {
+  config = {
+    -- 不把 REPL 当作 scratch buffer，退出时保留 buffer
+    scratch_repl = false,
+    -- REPL 进程退出后不自动关闭窗口
+    close_window_on_exit = false,
+
+    repl_definition = {
+      python = {
+        -- 连接到已经跑在后台的 kernel
+        command = {
+          "bash", "-lc",
+          "jupyter console --simple-prompt "
+            .. "--existing /Users/dengjinqiu/Library/Jupyter/runtime/kernel-79670.json"
+        },
+        format = common.bracketed_paste_python,
+      },
+    },
+
+    -- filetype -> repl 名称
+    preferred = {
+      python = "python",
+    },
+
+    -- 打开 REPL 时使用 split 窗口，并设置大小
+    repl_open_cmd = "belowright split | resize 15",
+  },
+
+  -- 常用按键映射；<leader> 默认是 “\”
+  keymaps = {
+    toggle_repl          = "<leader>so",  -- 打开或关闭 REPL 窗口
+    restart_repl         = "<leader>sr",  -- 重启 REPL（关闭再重新打开）
+    send_motion          = "<leader>sc",  -- 发送当前行或选区
+    visual_send          = "<leader>sv",  -- 选中后发送
+    send_file            = "<leader>sf",  -- 发送整个文件
+    send_line            = "<leader>sl",  -- 发送当前行
+    send_until_cursor    = "<leader>su",  -- 发送到光标所在行
+    send_paragraph       = "<leader>sp",  -- 发送当前段落
+    send_mark            = "<leader>sm",  -- 发送到上次标记的位置
+    mark_motion          = "<leader>mm",  -- 用 motion 设置发送范围标记
+    mark_visual          = "<leader>mv",  -- 在可视模式下设置标记
+    remove_mark          = "<leader>md",  -- 删除发送标记
+    cr                   = "<leader>cr",  -- 在 REPL 中发送回车
+    interrupt            = "<leader>si",  -- 中断内核运行（Ctrl-C）
+    exit                 = "<leader>sq",  -- 退出 REPL
+    clear                = "<leader>cl",  -- 清屏
+  },
+}
