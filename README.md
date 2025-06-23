@@ -49,3 +49,8 @@ ln -s "$(pwd)/nvim-linux-x86_64.appimage" ~/.local/bin/nvim
 
 ssh 端粘贴到系统剪切板
 远程的剪切板和本地隔离, 通过OSC52可以将远程的内容同步到本地，但没找到把本地同步到远程的方法。本地复制的内容只能ctrl+V到远程
+
+notebook
+1. 需要有一个可以运行的ipython kernal。
+2. 需要用iron通过jupyter console连接到ipython kernal。这个是纯本地配置。
+3. 如果需要远程连接到ipython kernal，需要把远程的kernal.json文件放到本地，再把ssh tunnel建立。
