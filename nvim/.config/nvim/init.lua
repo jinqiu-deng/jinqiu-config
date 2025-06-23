@@ -99,29 +99,76 @@ vim.keymap.set('n', '<C-K>', '<C-W>k')
 vim.keymap.set('n', '<C-L>', '<C-W>l')
 vim.keymap.set('n', '<C-H>', '<C-W>h')
 
--- ------------ telescope.nvim: 模糊查找 ------------------------
-require('telescope').setup{
+-- telescope.nvim: 模糊查找 + 扩展
+require('telescope').setup {
   defaults = {
-    prompt_prefix = "🔍 ",
+    prompt_prefix   = "🔍 ",
     selection_caret = "➤ ",
     mappings = {
-      i = {
-        ["<C-n>"] = "move_selection_next",
-        ["<C-p>"] = "move_selection_previous",
-        ["<C-c>"] = "close",
-      },
-      n = {
-        ["q"] = "close",
-      },
+      i = { ["<C-n>"] = "move_selection_next", ["<C-p>"] = "move_selection_previous" },
+      n = { ["q"] = "close" },
+    },
+  },
+  extensions = {
+    fzf = {
+      fuzzy                   = true,
+      override_generic_sorter = true,
+      override_file_sorter    = true,
+    },
+    file_browser = {
+      theme            = "ivy",
+      hijack_netrw     = true,
+      hidden           = true,
+      respect_gitignore= false,
+      previewer        = false,   -- ← 在扩展里关预览
     },
   },
 }
 
+-- 然后再 load 扩展
+require('telescope').load_extension('fzf')
+require('telescope').load_extension('file_browser')
+
+-- 你的快捷键映射
+vim.keymap.set('n', '<leader>fe', function()
+  require('telescope').extensions.file_browser.file_browser({
+    cwd = vim.loop.cwd(),
+    -- （这里也可以再 override previewer = false）
+  })
+end, { desc = '文件浏览器' })
+
+-- 在这里加入到你其它 <leader> 映射的附近
+vim.keymap.set('n', '<leader>fr',
+  function()
+    require('telescope.builtin').oldfiles({
+      prompt_title = " Recent Files",
+      cwd_only     = false,         -- 只看当前工作目录就设为 true
+    })
+  end,
+  { desc = "Open Recent Files" }
+)
+
+
+-- 加载扩展
+require('telescope').load_extension('fzf')
+require('telescope').load_extension('file_browser')
+
+vim.keymap.set('n', '<leader>gf',
+  require('telescope.builtin').git_files,
+  { desc = 'Git 跟踪文件' })
+
+-- 快捷键映射
 local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>ff', builtin.find_files, {desc = '查找文件'})
-vim.keymap.set('n', '<leader>fg', builtin.live_grep, {desc = '全局 grep'})
-vim.keymap.set('n', '<leader>fb', builtin.buffers,   {desc = '列出 Buffer'})
-vim.keymap.set('n', '<leader>fh', builtin.help_tags, {desc = '帮助文档查找'})
+vim.keymap.set('n', '<leader>ff', builtin.find_files,    { desc = '查找文件' })
+vim.keymap.set('n', '<leader>fg', builtin.live_grep,     { desc = '全局 grep' })
+vim.keymap.set('n', '<leader>fb', builtin.buffers,       { desc = '列出 Buffer' })
+vim.keymap.set('n', '<leader>fh', builtin.help_tags,     { desc = '帮助文档' })
+-- 新增：telescope-file-browser
+vim.keymap.set('n', '<leader>fe', function()
+  require('telescope').extensions.file_browser.file_browser({
+    cwd = vim.loop.cwd(),
+  })
+end, { desc = '文件浏览器' })
 
 -- ------------ vim-easymotion: 快速跳转 ------------------------
 vim.cmd([[
@@ -236,3 +283,56 @@ iron.setup {
     clear                = "<leader>cl",  -- 清屏
   },
 }
+
+-- Neo-tree 核心配置
+require("neo-tree").setup({
+  close_if_last_window = true,       -- 关闭最后一个窗口时一起退出 Neo-tree
+  enable_git_status = true,          -- 显示 Git 状态
+  enable_diagnostics = true,         -- 显示 Diagnostics（LSP 报错）
+  popup_border_style = "rounded",    -- 浮动窗口的边框样式
+
+  filesystem = {
+    hijack_netrw_behavior = "open_default",  -- 劫持 netrw，打开目录用 Neo-tree
+    follow_current_file = true,              -- 光标文件变化时自动展开到对应节点
+    use_libuv_file_watcher = true,           -- 用更高效的文件监听刷新树
+
+    filtered_items = {
+      hide_dotfiles = false,     -- 隐藏 ·开头 文件
+      hide_gitignored = true,    -- 隐藏被 .gitignore 的文件
+      never_show = { ".DS_Store" },
+    },
+  },
+
+  window = {
+    position = "left",
+    width    = 30,
+    mappings = {
+      ["<cr>"] = "open",
+      ["o"]    = "open",
+      ["a"]    = "add",
+      ["d"]    = "delete",
+      ["r"]    = "rename",
+      ["<space>"] = "toggle_node",
+    },
+  },
+
+  -- 打开文件时自动关闭 Neo-tree
+  commands = {
+    open = function(state)
+      require("neo-tree.commands").open(state)
+      vim.cmd("wincmd p")  -- 切回上一个窗口
+    end,
+  },
+})
+
+-- VimEnter 时，如果参数是一个目录，则自动启动 Neo-tree
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function(data)
+    if vim.fn.isdirectory(data.file) == 1 then
+      require("neo-tree.command").execute({ source = "filesystem" })
+    end
+  end,
+})
+
+-- 全局快捷键，手动切换 Neo-tree
+vim.keymap.set("n", "<C-n>", "<cmd>Neotree toggle<cr>", { desc = "Toggle Neo-tree" })

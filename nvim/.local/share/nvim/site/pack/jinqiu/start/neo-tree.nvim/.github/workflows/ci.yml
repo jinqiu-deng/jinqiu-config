@@ -1,0 +1,84 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+      - v1.x
+      - v2.x
+      - v3.x
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  stylua-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check formatting
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --color always --check lua/
+
+  plenary-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            rev: nightly/nvim-linux-x86_64.tar.gz
+          - os: ubuntu-22.04
+            rev: v0.8.3/nvim-linux64.tar.gz
+          - os: ubuntu-22.04
+            rev: v0.9.5/nvim-linux64.tar.gz
+          - os: ubuntu-22.04
+            rev: v0.10.4/nvim-linux-x86_64.tar.gz
+    steps:
+      - uses: actions/checkout@v4
+      - run: date +%F > todays-date
+      - name: Restore cache for today's nightly.
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: ${{ runner.os }}-${{ matrix.rev }}-${{ hashFiles('todays-date') }}
+      - name: Prepare
+        run: |
+          test -d build || {
+            mkdir -p build
+            curl -sL "https://github.com/neovim/neovim/releases/download/${{ matrix.rev }}" | tar xzf - --strip-components=1 -C "${PWD}/build"
+          }
+
+      # - name: Get Luver Cache Key
+      #   id: luver-cache-key
+      #   env:
+      #     CI_RUNNER_OS: ${{ runner.os }}
+      #   run: |
+      #     echo "::set-output name=value::${CI_RUNNER_OS}-luver-v1-$(date -u +%Y-%m-%d)"
+      #   shell: bash
+      # - name: Setup Luver Cache
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ~/.local/share/luver
+      #     key: ${{ steps.luver-cache-key.outputs.value }}
+
+      # - name: Setup Lua
+      #   uses: MunifTanjim/luver-action@v1
+      #   with:
+      #     default: 5.1.5
+      #     lua_versions: 5.1.5
+      #     luarocks_versions: 5.1.5:3.8.0
+      # - name: Setup luacov
+      #   run: |
+      #     luarocks install luacov
+
+      - name: Run tests
+        run: |
+          export PATH="${PWD}/build/bin:${PATH}"
+          make setup
+          make test
+
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v2
