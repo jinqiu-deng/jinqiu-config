@@ -22,14 +22,16 @@ make
 make install
 
 zshell
+低版本的机器可能无法运行
 查看本机系统，找到对应的安装包，并安装在home/local下, 避免sudo权限问题
 下载并解压，进入对应目录 https://sourceforge.net/projects/zsh/files/zsh/
 运行 ./Util/preconfig
 运行 ./configure --prefix=$HOME/.local
-运行 make make install
+运行 make & make install
 zsh在 local/bin/zsh
 
 nvim
+低版本的机器可能无法运行
 https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.appimage
 chmod u+x nvim-linux-x86_64.appimage
 ln -s "$(pwd)/nvim-linux-x86_64.appimage" ~/.local/bin/nvim
@@ -44,11 +46,15 @@ bullet train的 theme在oh-my-shell下
 需要在每台机器单独运行 conda init zsh，把钩子写入zshrc
 插件通过git下载，放到 .oh-my-zsh/custom/plugins 注意先把 .git删了 在.zshrc中加入 plugins+=( zsh-syntax-highlighting )
 远程把git关掉要zshell太慢 git config --global oh-my-zsh.hide-status 1
-
+远程需要把ClashX的port关掉
 在当前默认shell的启动项里加入，以便自动启动zsh
-export LD_LIBRARY_PATH="$HOME/.local/lib64:$HOME/.local/lib:$LD_LIBRARY_PATH"
-export PATH="$HOME/.local/bin:$PATH"
-exec zsh -l
+
+    export LD_LIBRARY_PATH="$HOME/.local/lib64:$HOME/.local/lib:$LD_LIBRARY_PATH"
+    export PATH="$HOME/.local/bin:$PATH"
+    # 只有在这台机器（hostname 为 nb-dengjinqiu-jinqiu）上，才切到 zsh 登录 shell
+    if [[ "$(hostname)" == "nb-dengjinqiu-jinqiu" ]]; then
+      exec zsh -l
+    fi
 
 tmux
 .tmux.conf
