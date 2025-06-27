@@ -93,6 +93,9 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- ------------ 全文搜索选中的文字 ---------------------------
+vim.keymap.set('v', '//', '"zy/\\V<C-R>z<CR>', { noremap = true, silent = true })
+
 -- ------------ 窗口跳转（支持tmux） ----------------------------
 vim.keymap.set('n', '<C-J>', '<C-W>j')
 vim.keymap.set('n', '<C-K>', '<C-W>k')
@@ -130,7 +133,7 @@ require('telescope').load_extension('fzf')
 require('telescope').load_extension('file_browser')
 
 -- 你的快捷键映射
-vim.keymap.set('n', '<leader>fe', function()
+vim.keymap.set('n', '<leader>ae', function()
   require('telescope').extensions.file_browser.file_browser({
     cwd = vim.loop.cwd(),
     -- （这里也可以再 override previewer = false）
@@ -138,7 +141,7 @@ vim.keymap.set('n', '<leader>fe', function()
 end, { desc = '文件浏览器' })
 
 -- 在这里加入到你其它 <leader> 映射的附近
-vim.keymap.set('n', '<leader>fr',
+vim.keymap.set('n', '<leader>ar',
   function()
     require('telescope.builtin').oldfiles({
       prompt_title = " Recent Files",
@@ -159,12 +162,12 @@ vim.keymap.set('n', '<leader>gf',
 
 -- 快捷键映射
 local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>ff', builtin.find_files,    { desc = '查找文件' })
-vim.keymap.set('n', '<leader>fg', builtin.live_grep,     { desc = '全局 grep' })
-vim.keymap.set('n', '<leader>fb', builtin.buffers,       { desc = '列出 Buffer' })
-vim.keymap.set('n', '<leader>fh', builtin.help_tags,     { desc = '帮助文档' })
+vim.keymap.set('n', '<leader>af', builtin.find_files,    { desc = '查找文件' })
+vim.keymap.set('n', '<leader>ag', builtin.live_grep,     { desc = '全局 grep' })
+vim.keymap.set('n', '<leader>ab', builtin.buffers,       { desc = '列出 Buffer' })
+vim.keymap.set('n', '<leader>ah', builtin.help_tags,     { desc = '帮助文档' })
 -- 新增：telescope-file-browser
-vim.keymap.set('n', '<leader>fe', function()
+vim.keymap.set('n', '<leader>ae', function()
   require('telescope').extensions.file_browser.file_browser({
     cwd = vim.loop.cwd(),
   })
@@ -235,6 +238,43 @@ local iron = require("iron.core")
 local view = require("iron.view")
 local common = require("iron.fts.common")
 
+local iron = require("iron.core")
+
+-- Send the "cell" delimited by #%% markers
+local function send_current_cell()
+  -- current buffer and cursor row
+  local bufnr = vim.api.nvim_get_current_buf()
+  local row    = vim.api.nvim_win_get_cursor(0)[1]
+
+  -- find the start of this cell
+  local start = vim.fn.search('^#%%', 'bnW')  -- last marker above
+  if start == 0 then
+    start = 1
+  else
+    start = start + 1
+  end
+
+  -- find the end of this cell
+  local finish = vim.fn.search('^#%%', 'nW')  -- next marker below
+  if finish == 0 then
+    finish = vim.api.nvim_buf_line_count(bufnr)
+  else
+    finish = finish - 1
+  end
+
+  -- extract the lines and send them to the REPL
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start-1, finish, false)
+  iron.send(nil, lines)
+end
+
+-- map it to <leader>gc
+vim.keymap.set("n", "<leader>gc", send_current_cell, { silent = true, desc = "Send current #%% cell to REPL" })
+
+-- 用 gd 发送 IPython 的 %clear 魔法命令
+vim.keymap.set('n', 'gd', function()
+  iron.send(nil, {"%clear"})
+end, { noremap = true, silent = true, desc = "Clear IPython Console" })
+
 iron.setup {
   config = {
     -- 不把 REPL 当作 scratch buffer，退出时保留 buffer
@@ -248,7 +288,7 @@ iron.setup {
         command = {
           "bash", "-lc",
           "jupyter console --simple-prompt "
-            .. "--existing /Users/dengjinqiu/Library/Jupyter/runtime/kernel-79670.json"
+            .. "--existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernal-cpu-ea.json"
         },
         format = common.bracketed_paste_python,
       },
@@ -259,28 +299,20 @@ iron.setup {
       python = "python",
     },
 
-    -- 打开 REPL 时使用 split 窗口，并设置大小
-    repl_open_cmd = "belowright split | resize 15",
+    -- 打开 REPL 时在当前窗口右侧竖直分屏，并让所有窗口等宽
+    repl_open_cmd = "vertical rightbelow vsplit | wincmd =",
   },
 
   -- 常用按键映射；<leader> 默认是 “\”
   keymaps = {
-    toggle_repl          = "<leader>so",  -- 打开或关闭 REPL 窗口
-    restart_repl         = "<leader>sr",  -- 重启 REPL（关闭再重新打开）
-    send_motion          = "<leader>sc",  -- 发送当前行或选区
-    visual_send          = "<leader>sv",  -- 选中后发送
-    send_file            = "<leader>sf",  -- 发送整个文件
-    send_line            = "<leader>sl",  -- 发送当前行
-    send_until_cursor    = "<leader>su",  -- 发送到光标所在行
-    send_paragraph       = "<leader>sp",  -- 发送当前段落
-    send_mark            = "<leader>sm",  -- 发送到上次标记的位置
-    mark_motion          = "<leader>mm",  -- 用 motion 设置发送范围标记
-    mark_visual          = "<leader>mv",  -- 在可视模式下设置标记
-    remove_mark          = "<leader>md",  -- 删除发送标记
-    cr                   = "<leader>cr",  -- 在 REPL 中发送回车
-    interrupt            = "<leader>si",  -- 中断内核运行（Ctrl-C）
-    exit                 = "<leader>sq",  -- 退出 REPL
-    clear                = "<leader>cl",  -- 清屏
+    toggle_repl       = "gt",  -- g + t 打开/关闭 REPL (t = toggle)
+    restart_repl      = "gr",  -- g + r 重启 REPL (r = restart)
+    send_line         = "gs",  -- g + s 发送当前行 (s = send)
+    visual_send       = "gv",  -- g + v 发送可视选区 (v = visual)
+    send_file         = "gp",  -- g + f 发送全文件 (p = pager)
+    send_until_cursor = "gu",  -- g + u 发送到光标 (u = until)
+    interrupt         = "gi",  -- g + i 中断内核 (i = interrupt)
+    exit              = "gq",  -- g + q 退出 REPL (q = quit)
   },
 }
 
