@@ -279,7 +279,7 @@ local function show_visidata_tmux(var)
   end)
 end
 
--- 自动命令：在 Python 编辑面板，为可视模式映射 <leader>vd
+-- 自动命令：在 Python 编辑面板，为普通模式映射 <leader>vd
 vim.api.nvim_create_autocmd("FileType", {
   pattern = {"python"},
   callback = function(args)
@@ -287,13 +287,13 @@ vim.api.nvim_create_autocmd("FileType", {
     if vim.bo[args.buf].filetype ~= "python" then return end
 
     -- 删除已有映射
-    pcall(vim.api.nvim_buf_del_keymap, args.buf, 'v', '<leader>vd')
+    pcall(vim.api.nvim_buf_del_keymap, args.buf, 'n', '<leader>vd')
 
-    vim.keymap.set("v", "<leader>vd", function()
-      vim.cmd('normal! "zy')
-      local var = vim.fn.getreg('z'):gsub("%s+", "")
+    -- 普通模式：光标所在单词直接执行
+    vim.keymap.set('n', '<leader>vd', function()
+      local var = vim.fn.expand('<cword>')
       show_visidata_tmux(var)
-    end, { buffer=true, silent=true, desc="导出 DF 并在 tmux 下方查看" })
+    end, { buffer=true, silent=true, desc="导出光标单词对应 DF 并查看" })
   end,
 })
 

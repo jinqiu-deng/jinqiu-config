@@ -22,14 +22,11 @@ export PATH="/usr/local/bin:$PATH"
 export JAVA_HOME=$(/usr/libexec/java_home)
 export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
 
-# 检查并启动到 cpu-ea 的 Jupyter 隧道
-function ensure_ea_tunnel() {
-  # 检测本地是否已有监听 57499 端口的进程
-  if lsof -iTCP:54477 -sTCP:LISTEN >/dev/null 2>&1; then
-    # Tunnel 已存在
-    :
-  else
-    echo "▶️ 为连接远程jupyter kernal 启动 cpu-ea SSH 隧道..."
+# 只在本地交互式（interactive）且非 SSH 会话时执行
+if [[ -o interactive ]] && [[ -z "$SSH_CONNECTION" ]]; then
+  # 1) 启动 Jupyter 隧道（如果还没启动）
+  if ! lsof -iTCP:54477 -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "▶️ 启动到 gpu-ea 的 Jupyter SSH 隧道..."
     ssh -fN \
       -L 54477:127.0.0.1:54477 \
       -L 55261:127.0.0.1:55261 \
@@ -38,11 +35,16 @@ function ensure_ea_tunnel() {
       -L 59029:127.0.0.1:59029 \
       gpu-ea
   fi
-}
 
-# 只对交互式、且非 SSH 会话 生效
-if [[ $- == *i* ]] && [[ -z "$SSH_CONNECTION" ]]; then
-  ensure_ea_tunnel
+  # 如果 ~/tmp 尚未挂载，就创建目录并挂载
+  if ! mount | grep 'dengjinqiu/tmp' >/dev/null 2>&1; then
+    echo "▶️ 本地会话，挂载 gpu-ea:/home/dengjinqiu/tmp 到 ~/tmp"
+    mkdir -p ~/tmp
+    nohup sshfs -o reconnect,ServerAliveInterval=15 \
+      dengjinqiu@gpu-ea:/home/dengjinqiu/tmp \
+      ~/tmp \
+      > /dev/null 2>&1 &
+  fi
 fi
 
 # 在 SSH 会话且脚本未运行时，后台启动 gpu_matrix_multi.py
