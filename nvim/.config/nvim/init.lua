@@ -3,6 +3,9 @@
 -- 插件目录: ~/.local/share/nvim/site/pack/jinqiu/*
 -- ==============================================================
 
+-- ---- 开子窗口 --------------------------------
+require("toggleterm").setup{}
+
 -- 根据 SSH 连接状态，切换本地/远程剪贴板配置
 if vim.env.SSH_CONNECTION == nil then
   -- 本地环境：所有复制/粘贴走系统剪贴板
@@ -46,6 +49,7 @@ vim.opt.backup = false
 vim.opt.autoread = true
 vim.opt.clipboard:append('unnamed')
 vim.opt.mouse = 'a'
+vim.g.mapleader = '\\'
 
 -- 开启真彩（如果终端支持）
 vim.opt.termguicolors = true
@@ -61,10 +65,10 @@ local nonicons_ext = require("nvim-nonicons.extentions.lualine")
 vim.opt.background = "dark"
 
  -- 可选：night / storm / moon / day
-vim.g.tokyonight_style = "storm"
+vim.g.tokyonight_style = "night"
 
 -- 可选：透明背景
-vim.g.tokyonight_transparent_background = 0
+vim.g.tokyonight_transparent_background = 1
 
 vim.cmd("colorscheme tokyonight")
 
@@ -170,8 +174,11 @@ local function send_current_cell()
   iron.send(nil, lines)
 end
 
--- map it to <leader>gc
-vim.keymap.set("n", "<leader>gc", send_current_cell, { silent = true, desc = "Send current #%% cell to REPL" })
+-- 普通模式下 \gc 发送当前 #%% cell
+vim.keymap.set("n", "<leader>gc", send_current_cell, {
+  silent = true,
+  desc   = "Send current #%% cell to REPL",
+})
 
 -- 用 gd 发送 IPython 的 %clear 魔法命令
 vim.keymap.set('n', 'gd', function()
@@ -193,7 +200,7 @@ iron.setup {
         -- 连接到已经跑在后台的 kernel
         command = {
           "bash", "-lc",
-          "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernal-cpu-ea.json"
+          "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernel-cpu-ea.json"
         },
         format = common.bracketed_paste,
       },
@@ -215,6 +222,79 @@ iron.setup {
     exit              = "gq",  -- g + q 退出 REPL (q = quit)
   },
 }
+
+-- 先确保加载了 Iron 和 ToggleTerm
+local Terminal = require("toggleterm.terminal").Terminal
+
+-- 这个函数在 REPL 窗口中打开 VisiData
+local function open_visidata_below_repl(tmp_path, vd_exe)
+  -- 1) 找到 filetype=iron 的窗口
+  local repl_win
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local buf = vim.api.nvim_win_get_buf(win)
+    if vim.bo[buf].filetype == "iron" then
+      repl_win = win
+      break
+    end
+  end
+  if not repl_win then
+    vim.notify("找不到 iron REPL 窗口", vim.log.levels.ERROR)
+    return
+  end
+
+  -- 2) 切到 REPL 窗口
+  local prev_win = vim.api.nvim_get_current_win()
+  vim.api.nvim_set_current_win(repl_win)
+
+  -- 3) 在 REPL 窗口下方水平分屏并打开 terminal
+  vim.cmd("belowright split")
+  vim.cmd("wincmd j")  -- 切到下方新窗
+  vim.cmd("resize 15") -- 固定高度为 15 行，可按需调整
+  vim.cmd(string.format("terminal %s -f csv %s", vd_exe, vim.fn.shellescape(tmp_path)))
+  vim.cmd("startinsert")
+
+  -- 4) 切回原来编辑窗口
+  vim.api.nvim_set_current_win(prev_win)
+end
+
+-- 针对 Python / Iron REPL buffer，创建可视模式下的 <leader>vd 映射
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "python",
+  callback = function(args)
+    -- 删除旧映射，防止重复
+    pcall(vim.api.nvim_buf_del_keymap, args.buf, 'v', '<leader>vd')
+
+    vim.keymap.set("v", "<leader>vd", function()
+      -- 1) 把选中的文本 yank 到寄存器 z，取出变量名
+      vim.cmd('normal! "zy')
+      local var = vim.fn.getreg('z'):gsub("%s+","")
+      if var == "" then
+        vim.notify("⚠️ 没有选中变量名", vim.log.levels.WARN)
+        return
+      end
+
+      -- 2) 远端执行 to_csv，把 CSV 写到 /home/dengjinqiu/tmp/tmp.csv
+      local remote_cmd = var .. ".to_csv('/home/dengjinqiu/tmp/tmp.csv', index=False)"
+      iron.send(nil, { remote_cmd })
+      vim.notify("🔍 已发送导出命令: " .. remote_cmd, vim.log.levels.INFO)
+
+      -- 3) 本地等待该文件出现
+      local local_path = vim.fn.expand("~/tmp/tmp.csv")
+      local vd_exe     = "/Users/dengjinqiu/opt/anaconda3/bin/vd"
+
+      local function wait_and_show()
+        if vim.fn.filereadable(local_path) == 1 then
+          open_visidata_below_repl(local_path, vd_exe)
+          vim.notify("✅ CSV 已生成，VData 在 REPL 下方打开", vim.log.levels.INFO)
+        else
+          vim.defer_fn(wait_and_show, 200)
+        end
+      end
+
+      wait_and_show()
+    end, { buffer=true, silent=true, desc="导出 DF 并在 VisiData 中查看" })
+  end,
+})
 
 -- ------------------------- Neo-tree 核心配置 -------------------
 local neo_ext = require("nvim-nonicons.extentions.nvim-tree")
