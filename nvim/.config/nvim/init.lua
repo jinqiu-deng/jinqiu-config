@@ -235,35 +235,20 @@ vim.g.vim_json_syntax_conceal = 0
 
 -- ------------ iron -----------------------------
 local iron = require("iron.core")
-local view = require("iron.view")
 local common = require("iron.fts.common")
-
-local iron = require("iron.core")
 
 -- Send the "cell" delimited by #%% markers
 local function send_current_cell()
-  -- current buffer and cursor row
-  local bufnr = vim.api.nvim_get_current_buf()
-  local row    = vim.api.nvim_win_get_cursor(0)[1]
+  local bufnr  = vim.api.nvim_get_current_buf()
+  -- 查找 cell 起止行
+  local start  = vim.fn.search('^#%%', 'bnW'); if start==0 then start=1 else start=start+1 end
+  local finish = vim.fn.search('^#%%', 'nW'); if finish==0 then finish=vim.api.nvim_buf_line_count(bufnr) else finish=finish-1 end
 
-  -- find the start of this cell
-  local start = vim.fn.search('^#%%', 'bnW')  -- last marker above
-  if start == 0 then
-    start = 1
-  else
-    start = start + 1
-  end
-
-  -- find the end of this cell
-  local finish = vim.fn.search('^#%%', 'nW')  -- next marker below
-  if finish == 0 then
-    finish = vim.api.nvim_buf_line_count(bufnr)
-  else
-    finish = finish - 1
-  end
-
-  -- extract the lines and send them to the REPL
+  -- 获取行列表并在尾部加一个空行
   local lines = vim.api.nvim_buf_get_lines(bufnr, start-1, finish, false)
+  table.insert(lines, "")
+
+  -- 直接把行列表扔给 REPL；common.bracketed_paste_python 会自动包裹
   iron.send(nil, lines)
 end
 
@@ -274,6 +259,9 @@ vim.keymap.set("n", "<leader>gc", send_current_cell, { silent = true, desc = "Se
 vim.keymap.set('n', 'gd', function()
   iron.send(nil, {"%clear"})
 end, { noremap = true, silent = true, desc = "Clear IPython Console" })
+
+-- 在 terminal 模式下，用单次 <Esc> 退回普通模式
+vim.api.nvim_set_keymap('t', '<Esc>', '<C-\\><C-n>', { noremap = true, silent = true })
 
 iron.setup {
   config = {
@@ -287,8 +275,7 @@ iron.setup {
         -- 连接到已经跑在后台的 kernel
         command = {
           "bash", "-lc",
-          "jupyter console --simple-prompt "
-            .. "--existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernal-cpu-ea.json"
+          "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernal-cpu-ea.json"
         },
         format = common.bracketed_paste_python,
       },
