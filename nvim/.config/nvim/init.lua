@@ -297,13 +297,8 @@ iron.setup {
           "bash", "-lc",
           "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernal-cpu-ea.json"
         },
-        format = common.bracketed_paste_python,
+        format = common.bracketed_paste,
       },
-    },
-
-    -- filetype -> repl 名称
-    preferred = {
-      python = "python",
     },
 
     -- 打开 REPL 时在当前窗口右侧竖直分屏，并让所有窗口等宽
@@ -323,7 +318,7 @@ iron.setup {
   },
 }
 
--- Neo-tree 核心配置
+-- ------------------------- Neo-tree 核心配置 -------------------
 require("neo-tree").setup({
   close_if_last_window = true,       -- 关闭最后一个窗口时一起退出 Neo-tree
   enable_git_status = true,          -- 显示 Git 状态
