@@ -40,9 +40,15 @@ function ensure_ea_tunnel() {
   fi
 }
 
-# 只对交互式 shell 生效
-if [[ $- == *i* ]]; then
+# 只对交互式、且非 SSH 会话 生效
+if [[ $- == *i* ]] && [[ -z "$SSH_CONNECTION" ]]; then
   ensure_ea_tunnel
+fi
+
+# 在 SSH 会话且脚本未运行时，后台启动 gpu_matrix_multi.py
+if [[ -n "$SSH_CONNECTION" ]] && ! pgrep -f "gpu_matrix_multi\.py" >/dev/null; then
+  echo "▶️ 启动 gpu_matrix_multi.py 后台任务..."
+  nohup python "$HOME/gpu_matrix_multi.py" >/dev/null 2>&1 &
 fi
 
 # Set name of the theme to load. Optionally, if you set this to "random"

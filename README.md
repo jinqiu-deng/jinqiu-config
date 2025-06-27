@@ -22,7 +22,6 @@ make
 make install
 
 zshell
-低版本的机器可能无法运行
 查看本机系统，找到对应的安装包，并安装在home/local下, 避免sudo权限问题
 下载并解压，进入对应目录 https://sourceforge.net/projects/zsh/files/zsh/
 运行 ./Util/preconfig
@@ -31,7 +30,6 @@ zshell
 zsh在 local/bin/zsh
 
 nvim
-低版本的机器可能无法运行
 https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.appimage
 chmod u+x nvim-linux-x86_64.appimage
 ln -s "$(pwd)/nvim-linux-x86_64.appimage" ~/.local/bin/nvim
@@ -60,11 +58,14 @@ tmux
 .tmux.conf
 
 nvim
-chaj都放到 .local/share/nvim/site/pack/jinqiu/start/
+插件都放到 .local/share/nvim/site/pack/jinqiu/start/
 
 都粘贴到系统剪切板,远程的剪切板和本地隔离, 通过OSC52可以将远程的内容同步到本地，但没找到把本地同步到远程的方法。本地复制的内容只能ctrl+V到远程
 
 notebook
-1. 需要有一个可以运行的ipython kernal。
-2. 需要用iron通过jupyter console连接到ipython kernal。这个是纯本地配置。
-3. 如果需要远程连接到ipython kernal，需要把远程的kernal.json文件放到本地，再把ssh tunnel建立。
+1. 需要有一个可以运行的ipython kernal，比如在远程机器上
+2. 需要把远程kernal的json文件复制到本地，并在vim配置里通过iron连接
+3. 需要再本地建立ssh到远程机器的tunnel，这样才能通过iron连接到ipython kernal。（再本地zshrc自动连接）
+
+gpu自动运行脚本
+为了提升GPU利用率，在ssh连接时自动运行gpu_matrix_multi.py
