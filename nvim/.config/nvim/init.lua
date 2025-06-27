@@ -3,137 +3,6 @@
 -- 插件目录: ~/.local/share/nvim/site/pack/jinqiu/*
 -- ==============================================================
 
--- helper：是不是本地会话
-local function is_local()
-  return vim.env.SSH_CONNECTION == nil
-end
-
-if is_local() then
-  -- 你放到 opt 下的插件名称
-  local opt_plugins = {
-    "gitsigns.nvim",
-    "telescope.nvim",
-    "telescope-fzf-native.nvim",
-    "telescope-file-browser.nvim",
-  }
-  for _, name in ipairs(opt_plugins) do
-    vim.cmd("packadd " .. name)
-  end
-
-  -- ------------ vim-startify: 启动页/书签 -----------------------
-  vim.g.startify_custom_header = {
-    '',
-    '',
-    '                   $$\\    $$\\ $$$$$$\\ $$\\      $$\\       $$\\   $$\\ $$$$$$$\\',
-    '                   $$ |   $$ |\\_$$  _|$$$\\    $$$ |      $$$\\  $$ |$$  __$$\\',
-    '                   $$ |   $$ |  $$ |  $$$$\\  $$$$ |      $$$$\\ $$ |$$ |  $$ |',
-    '                   \\$$\\  $$  |  $$ |  $$\\$$\\$$ $$ |      $$ $$\\$$ |$$$$$$$\\ |',
-    '                    \\$$\\$$  /   $$ |  $$ \\$$$  $$ |      $$ \\$$$$ |$$  __$$\\',
-    '                     \\$$$  /    $$ |  $$ |\\$  /$$ |      $$ |\\$$$ |$$ |  $$ |',
-    '                      \\$  /   $$$$$$\\ $$ | \\_/ $$ |      $$ | \\$$ |$$$$$$$  |',
-    '                       \\_/    \\______|\\__|     \\__|      \\__|  \\__|\\_______/',
-    ''
-  }
-
-  -- ------------ gitsigns.nvim: Git 变更高亮/Blame ---------------
-  require('gitsigns').setup {
-    signs = {
-      add          = {hl = 'GitGutterAdd'   , text = '+'},
-      change       = {hl = 'GitGutterChange', text = '~'},
-      delete       = {hl = 'GitGutterDelete', text = '_'},
-      topdelete    = {hl = 'GitGutterDelete', text = '‾'},
-      changedelete = {hl = 'GitGutterChange', text = '~'},
-    },
-    current_line_blame = true,
-    current_line_blame_opts = {
-      virt_text = true,
-      virt_text_pos = 'eol',
-      delay = 500,
-    },
-    on_attach = function(bufnr)
-      local gs = package.loaded.gitsigns
-      vim.keymap.set('n', ']h', gs.next_hunk,    {buffer=bufnr, desc="Next Git hunk"})
-      vim.keymap.set('n', '[h', gs.prev_hunk,    {buffer=bufnr, desc="Prev Git hunk"})
-      vim.keymap.set('n', '<leader>hp', gs.preview_hunk, {buffer=bufnr, desc="Preview Git hunk"})
-      vim.keymap.set('n', '<leader>tb', '<cmd>Gitsigns toggle_current_line_blame<CR>', {buffer=bufnr})
-      vim.keymap.set('n', '<leader>gb', '<cmd>Gitsigns blame_line<CR>', {buffer=bufnr})
-    end,
-  }
-
-  -- ---------------telescope.nvim: 模糊查找 + 扩展 --------------
-  require('telescope').setup {
-    defaults = {
-      prompt_prefix   = "🔍 ",
-      selection_caret = "➤ ",
-      mappings = {
-        i = { ["<C-n>"] = "move_selection_next", ["<C-p>"] = "move_selection_previous" },
-        n = { ["q"] = "close" },
-      },
-    },
-    extensions = {
-      fzf = {
-        fuzzy                   = true,
-        override_generic_sorter = true,
-        override_file_sorter    = true,
-      },
-      file_browser = {
-        theme            = "ivy",
-        hijack_netrw     = true,
-        hidden           = true,
-        respect_gitignore= false,
-        previewer        = false,   -- ← 在扩展里关预览
-      },
-    },
-  }
-
-  -- 然后再 load 扩展
-  require('telescope').load_extension('fzf')
-  require('telescope').load_extension('file_browser')
-
-  -- 你的快捷键映射
-  vim.keymap.set('n', '<leader>ae', function()
-    require('telescope').extensions.file_browser.file_browser({
-      cwd = vim.loop.cwd(),
-      -- （这里也可以再 override previewer = false）
-    })
-  end, { desc = '文件浏览器' })
-
-  -- 在这里加入到你其它 <leader> 映射的附近
-  vim.keymap.set('n', '<leader>ar',
-    function()
-      require('telescope.builtin').oldfiles({
-        prompt_title = " Recent Files",
-        cwd_only     = false,         -- 只看当前工作目录就设为 true
-      })
-    end,
-    { desc = "Open Recent Files" }
-  )
-
-
-  -- 加载扩展
-  require('telescope').load_extension('fzf')
-  require('telescope').load_extension('file_browser')
-
-  vim.keymap.set('n', '<leader>gf',
-    require('telescope.builtin').git_files,
-    { desc = 'Git 跟踪文件' })
-
-  -- 快捷键映射
-  local builtin = require('telescope.builtin')
-  vim.keymap.set('n', '<leader>af', builtin.find_files,    { desc = '查找文件' })
-  vim.keymap.set('n', '<leader>ag', builtin.live_grep,     { desc = '全局 grep' })
-  vim.keymap.set('n', '<leader>ab', builtin.buffers,       { desc = '列出 Buffer' })
-  vim.keymap.set('n', '<leader>ah', builtin.help_tags,     { desc = '帮助文档' })
-  -- 新增：telescope-file-browser
-  vim.keymap.set('n', '<leader>ae', function()
-    require('telescope').extensions.file_browser.file_browser({
-      cwd = vim.loop.cwd(),
-    })
-  end, { desc = '文件浏览器' })
-
-
-end
-
 -- 根据 SSH 连接状态，切换本地/远程剪贴板配置
 if vim.env.SSH_CONNECTION == nil then
   -- 本地环境：所有复制/粘贴走系统剪贴板
@@ -178,14 +47,26 @@ vim.opt.autoread = true
 vim.opt.clipboard:append('unnamed')
 vim.opt.mouse = 'a'
 
--- 256色/真彩配色
-if vim.fn.has('termguicolors') == 1 then
-  vim.opt.termguicolors = true
-end
-vim.g.solarized_termcolors = 256
-vim.opt.background = 'dark'
-vim.cmd('colorscheme solarized')
-vim.cmd('highlight clear SignColumn')
+-- 开启真彩（如果终端支持）
+vim.opt.termguicolors = true
+
+-- 先载入 nonicons
+local nonicons = require("nvim-nonicons")
+nonicons.setup()
+
+-- 载入 lualine 的 nonicons 扩展
+local nonicons_ext = require("nvim-nonicons.extentions.lualine")
+
+-- 设置背景
+vim.opt.background = "dark"
+
+ -- 可选：night / storm / moon / day
+vim.g.tokyonight_style = "storm"
+
+-- 可选：透明背景
+vim.g.tokyonight_transparent_background = 0
+
+vim.cmd("colorscheme tokyonight")
 
 -- 不自动加注释前缀，确保在 filetype plugin indent on 之后
 vim.api.nvim_create_augroup('NoCommentContinuation', { clear = true })
@@ -198,6 +79,27 @@ vim.api.nvim_create_autocmd('FileType', {
     vim.opt_local.formatoptions:remove('o')
   end,
 })
+
+-- --------------- lualine 基本配置 -------------------
+require('lualine').setup{
+  options = {
+    icons_enabled = true,
+    theme = 'auto',  -- 会自动匹配 tokyonight 主题
+    component_separators = { left = '', right = '' },
+    section_separators = { left = '', right = '' },
+    disabled_filetypes = {},
+    always_divide_middle = false,
+    globalstatus = true,
+  },
+  sections = {
+    lualine_a = { nonicons_ext.mode },  -- 模式图标
+    lualine_b = {'branch', 'diff', 'diagnostics'},
+    lualine_c = {'filename'},
+    lualine_x = {'encoding','fileformat','filetype'},
+    lualine_y = {'progress'},
+    lualine_z = {'location'}
+  }
+}
 
 -- ------------ 全文搜索选中的文字 ---------------------------
 vim.keymap.set('v', '//', '"zy/\\V<C-R>z<CR>', { noremap = true, silent = true })
@@ -218,10 +120,6 @@ vim.cmd([[
 
 -- ------------ tagbar: 代码结构树 ------------------------------
 vim.keymap.set('n', '<F8>', ':TagbarToggle<CR>', {desc = "Toggle Tagbar"})
-
--- ------------ vim-airline: 状态栏美化 -------------------------
-vim.g.airline_theme = 'solarized'
-vim.g.airline_powerline_fonts = 1
 
 -- ------------ nerdcommenter: 注释增强 -------------------------
 vim.g.NERDSpaceDelims = 1
@@ -319,7 +217,13 @@ iron.setup {
 }
 
 -- ------------------------- Neo-tree 核心配置 -------------------
+local neo_ext = require("nvim-nonicons.extentions.nvim-tree")
 require("neo-tree").setup({
+  renderer = {
+    icons = {
+      glyphs = neo_ext.glyphs,
+    },
+  },
   close_if_last_window = true,       -- 关闭最后一个窗口时一起退出 Neo-tree
   enable_git_status = true,          -- 显示 Git 状态
   enable_diagnostics = true,         -- 显示 Diagnostics（LSP 报错）
@@ -370,3 +274,136 @@ vim.api.nvim_create_autocmd("VimEnter", {
 
 -- 全局快捷键，手动切换 Neo-tree
 vim.keymap.set("n", "<C-n>", "<cmd>Neotree toggle<cr>", { desc = "Toggle Neo-tree" })
+
+-- helper：是不是本地会话
+local function is_local()
+  return vim.env.SSH_CONNECTION == nil
+end
+
+if is_local() then
+  -- 你放到 opt 下的插件名称
+  local opt_plugins = {
+    "gitsigns.nvim",
+    "telescope.nvim",
+    "telescope-fzf-native.nvim",
+    "telescope-file-browser.nvim",
+  }
+  for _, name in ipairs(opt_plugins) do
+    vim.cmd("packadd " .. name)
+  end
+
+  -- ------------ vim-startify: 启动页/书签 -----------------------
+  vim.g.startify_custom_header = {
+    '',
+    '',
+    '                   $$\\    $$\\ $$$$$$\\ $$\\      $$\\       $$\\   $$\\ $$$$$$$\\',
+    '                   $$ |   $$ |\\_$$  _|$$$\\    $$$ |      $$$\\  $$ |$$  __$$\\',
+    '                   $$ |   $$ |  $$ |  $$$$\\  $$$$ |      $$$$\\ $$ |$$ |  $$ |',
+    '                   \\$$\\  $$  |  $$ |  $$\\$$\\$$ $$ |      $$ $$\\$$ |$$$$$$$\\ |',
+    '                    \\$$\\$$  /   $$ |  $$ \\$$$  $$ |      $$ \\$$$$ |$$  __$$\\',
+    '                     \\$$$  /    $$ |  $$ |\\$  /$$ |      $$ |\\$$$ |$$ |  $$ |',
+    '                      \\$  /   $$$$$$\\ $$ | \\_/ $$ |      $$ | \\$$ |$$$$$$$  |',
+    '                       \\_/    \\______|\\__|     \\__|      \\__|  \\__|\\_______/',
+    ''
+  }
+
+  -- ------------ gitsigns.nvim: Git 变更高亮/Blame ---------------
+  require('gitsigns').setup {
+    signs = {
+      add          = {hl = 'GitGutterAdd'   , text = '+'},
+      change       = {hl = 'GitGutterChange', text = '~'},
+      delete       = {hl = 'GitGutterDelete', text = '_'},
+      topdelete    = {hl = 'GitGutterDelete', text = '‾'},
+      changedelete = {hl = 'GitGutterChange', text = '~'},
+    },
+    current_line_blame = true,
+    current_line_blame_opts = {
+      virt_text = true,
+      virt_text_pos = 'eol',
+      delay = 500,
+    },
+    on_attach = function(bufnr)
+      local gs = package.loaded.gitsigns
+      vim.keymap.set('n', ']h', gs.next_hunk,    {buffer=bufnr, desc="Next Git hunk"})
+      vim.keymap.set('n', '[h', gs.prev_hunk,    {buffer=bufnr, desc="Prev Git hunk"})
+      vim.keymap.set('n', '<leader>hp', gs.preview_hunk, {buffer=bufnr, desc="Preview Git hunk"})
+      vim.keymap.set('n', '<leader>tb', '<cmd>Gitsigns toggle_current_line_blame<CR>', {buffer=bufnr})
+      vim.keymap.set('n', '<leader>gb', '<cmd>Gitsigns blame_line<CR>', {buffer=bufnr})
+    end,
+  }
+
+  -- ---------------telescope.nvim: 模糊查找 + 扩展 --------------
+  local icons = require('nvim-nonicons')
+  require('telescope').setup {
+    defaults = {
+      prompt_prefix = "  " .. icons.get("telescope") .. "  ",
+      selection_caret = "  " .. icons.get("arrow_right") .. "  ",
+      entry_prefix = "   ",
+      mappings = {
+        i = { ["<C-n>"] = "move_selection_next", ["<C-p>"] = "move_selection_previous" },
+        n = { ["q"] = "close" },
+      },
+    },
+    extensions = {
+      fzf = {
+        fuzzy                   = true,
+        override_generic_sorter = true,
+        override_file_sorter    = true,
+      },
+      file_browser = {
+        theme            = "ivy",
+        hijack_netrw     = true,
+        hidden           = true,
+        respect_gitignore= false,
+        previewer        = false,   -- ← 在扩展里关预览
+      },
+    },
+  }
+
+  -- 然后再 load 扩展
+  require('telescope').load_extension('fzf')
+  require('telescope').load_extension('file_browser')
+
+  -- 你的快捷键映射
+  vim.keymap.set('n', '<leader>ae', function()
+    require('telescope').extensions.file_browser.file_browser({
+      cwd = vim.loop.cwd(),
+      -- （这里也可以再 override previewer = false）
+    })
+  end, { desc = '文件浏览器' })
+
+  -- 在这里加入到你其它 <leader> 映射的附近
+  vim.keymap.set('n', '<leader>ar',
+    function()
+      require('telescope.builtin').oldfiles({
+        prompt_title = " Recent Files",
+        cwd_only     = false,         -- 只看当前工作目录就设为 true
+      })
+    end,
+    { desc = "Open Recent Files" }
+  )
+
+
+  -- 加载扩展
+  require('telescope').load_extension('fzf')
+  require('telescope').load_extension('file_browser')
+
+  vim.keymap.set('n', '<leader>gf',
+    require('telescope.builtin').git_files,
+    { desc = 'Git 跟踪文件' })
+
+  -- 快捷键映射
+  local builtin = require('telescope.builtin')
+  vim.keymap.set('n', '<leader>af', builtin.find_files,    { desc = '查找文件' })
+  vim.keymap.set('n', '<leader>ag', builtin.live_grep,     { desc = '全局 grep' })
+  vim.keymap.set('n', '<leader>ab', builtin.buffers,       { desc = '列出 Buffer' })
+  vim.keymap.set('n', '<leader>ah', builtin.help_tags,     { desc = '帮助文档' })
+  -- 新增：telescope-file-browser
+  vim.keymap.set('n', '<leader>ae', function()
+    require('telescope').extensions.file_browser.file_browser({
+      cwd = vim.loop.cwd(),
+    })
+  end, { desc = '文件浏览器' })
+
+
+end
