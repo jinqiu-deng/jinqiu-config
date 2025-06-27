@@ -22,6 +22,29 @@ export PATH="/usr/local/bin:$PATH"
 export JAVA_HOME=$(/usr/libexec/java_home)
 export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
 
+# 检查并启动到 cpu-ea 的 Jupyter 隧道
+function ensure_ea_tunnel() {
+  # 检测本地是否已有监听 57499 端口的进程
+  if lsof -iTCP:57499 -sTCP:LISTEN >/dev/null 2>&1; then
+    # Tunnel 已存在
+    :
+  else
+    echo "▶️ 为连接远程jupyter kernal 启动 cpu-ea SSH 隧道..."
+    ssh -fN \
+      -L 57499:127.0.0.1:57499 \
+      -L 45013:127.0.0.1:45013 \
+      -L 58863:127.0.0.1:58863 \
+      -L 45395:127.0.0.1:45395 \
+      -L 37653:127.0.0.1:37653 \
+      cpu-ea
+  fi
+}
+
+# 只对交互式 shell 生效
+if [[ $- == *i* ]]; then
+  ensure_ea_tunnel
+fi
+
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes

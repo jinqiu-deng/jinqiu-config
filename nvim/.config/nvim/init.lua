@@ -93,35 +93,85 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- ------------ 全文搜索选中的文字 ---------------------------
+vim.keymap.set('v', '//', '"zy/\\V<C-R>z<CR>', { noremap = true, silent = true })
+
 -- ------------ 窗口跳转（支持tmux） ----------------------------
 vim.keymap.set('n', '<C-J>', '<C-W>j')
 vim.keymap.set('n', '<C-K>', '<C-W>k')
 vim.keymap.set('n', '<C-L>', '<C-W>l')
 vim.keymap.set('n', '<C-H>', '<C-W>h')
 
--- ------------ telescope.nvim: 模糊查找 ------------------------
-require('telescope').setup{
+-- telescope.nvim: 模糊查找 + 扩展
+require('telescope').setup {
   defaults = {
-    prompt_prefix = "🔍 ",
+    prompt_prefix   = "🔍 ",
     selection_caret = "➤ ",
     mappings = {
-      i = {
-        ["<C-n>"] = "move_selection_next",
-        ["<C-p>"] = "move_selection_previous",
-        ["<C-c>"] = "close",
-      },
-      n = {
-        ["q"] = "close",
-      },
+      i = { ["<C-n>"] = "move_selection_next", ["<C-p>"] = "move_selection_previous" },
+      n = { ["q"] = "close" },
+    },
+  },
+  extensions = {
+    fzf = {
+      fuzzy                   = true,
+      override_generic_sorter = true,
+      override_file_sorter    = true,
+    },
+    file_browser = {
+      theme            = "ivy",
+      hijack_netrw     = true,
+      hidden           = true,
+      respect_gitignore= false,
+      previewer        = false,   -- ← 在扩展里关预览
     },
   },
 }
 
+-- 然后再 load 扩展
+require('telescope').load_extension('fzf')
+require('telescope').load_extension('file_browser')
+
+-- 你的快捷键映射
+vim.keymap.set('n', '<leader>ae', function()
+  require('telescope').extensions.file_browser.file_browser({
+    cwd = vim.loop.cwd(),
+    -- （这里也可以再 override previewer = false）
+  })
+end, { desc = '文件浏览器' })
+
+-- 在这里加入到你其它 <leader> 映射的附近
+vim.keymap.set('n', '<leader>ar',
+  function()
+    require('telescope.builtin').oldfiles({
+      prompt_title = " Recent Files",
+      cwd_only     = false,         -- 只看当前工作目录就设为 true
+    })
+  end,
+  { desc = "Open Recent Files" }
+)
+
+
+-- 加载扩展
+require('telescope').load_extension('fzf')
+require('telescope').load_extension('file_browser')
+
+vim.keymap.set('n', '<leader>gf',
+  require('telescope.builtin').git_files,
+  { desc = 'Git 跟踪文件' })
+
+-- 快捷键映射
 local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>ff', builtin.find_files, {desc = '查找文件'})
-vim.keymap.set('n', '<leader>fg', builtin.live_grep, {desc = '全局 grep'})
-vim.keymap.set('n', '<leader>fb', builtin.buffers,   {desc = '列出 Buffer'})
-vim.keymap.set('n', '<leader>fh', builtin.help_tags, {desc = '帮助文档查找'})
+vim.keymap.set('n', '<leader>af', builtin.find_files,    { desc = '查找文件' })
+vim.keymap.set('n', '<leader>ag', builtin.live_grep,     { desc = '全局 grep' })
+vim.keymap.set('n', '<leader>ab', builtin.buffers,       { desc = '列出 Buffer' })
+vim.keymap.set('n', '<leader>ah', builtin.help_tags,     { desc = '帮助文档' })
+-- 新增：telescope-file-browser
+vim.keymap.set('n', '<leader>ae', function()
+  require('telescope').extensions.file_browser.file_browser({
+    cwd = vim.loop.cwd(),
+  })
+end, { desc = '文件浏览器' })
 
 -- ------------ vim-easymotion: 快速跳转 ------------------------
 vim.cmd([[
@@ -185,8 +235,33 @@ vim.g.vim_json_syntax_conceal = 0
 
 -- ------------ iron -----------------------------
 local iron = require("iron.core")
-local view = require("iron.view")
 local common = require("iron.fts.common")
+
+-- Send the "cell" delimited by #%% markers
+local function send_current_cell()
+  local bufnr  = vim.api.nvim_get_current_buf()
+  -- 查找 cell 起止行
+  local start  = vim.fn.search('^#%%', 'bnW'); if start==0 then start=1 else start=start+1 end
+  local finish = vim.fn.search('^#%%', 'nW'); if finish==0 then finish=vim.api.nvim_buf_line_count(bufnr) else finish=finish-1 end
+
+  -- 获取行列表并在尾部加一个空行
+  local lines = vim.api.nvim_buf_get_lines(bufnr, start-1, finish, false)
+  table.insert(lines, "")
+
+  -- 直接把行列表扔给 REPL；common.bracketed_paste_python 会自动包裹
+  iron.send(nil, lines)
+end
+
+-- map it to <leader>gc
+vim.keymap.set("n", "<leader>gc", send_current_cell, { silent = true, desc = "Send current #%% cell to REPL" })
+
+-- 用 gd 发送 IPython 的 %clear 魔法命令
+vim.keymap.set('n', 'gd', function()
+  iron.send(nil, {"%clear"})
+end, { noremap = true, silent = true, desc = "Clear IPython Console" })
+
+-- 在 terminal 模式下，用单次 <Esc> 退回普通模式
+vim.api.nvim_set_keymap('t', '<Esc>', '<C-\\><C-n>', { noremap = true, silent = true })
 
 iron.setup {
   config = {
@@ -200,8 +275,7 @@ iron.setup {
         -- 连接到已经跑在后台的 kernel
         command = {
           "bash", "-lc",
-          "jupyter console --simple-prompt "
-            .. "--existing /Users/dengjinqiu/Library/Jupyter/runtime/kernel-79670.json"
+          "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernal-cpu-ea.json"
         },
         format = common.bracketed_paste_python,
       },
@@ -212,27 +286,72 @@ iron.setup {
       python = "python",
     },
 
-    -- 打开 REPL 时使用 split 窗口，并设置大小
-    repl_open_cmd = "belowright split | resize 15",
+    -- 打开 REPL 时在当前窗口右侧竖直分屏，并让所有窗口等宽
+    repl_open_cmd = "vertical rightbelow vsplit | wincmd =",
   },
 
   -- 常用按键映射；<leader> 默认是 “\”
   keymaps = {
-    toggle_repl          = "<leader>so",  -- 打开或关闭 REPL 窗口
-    restart_repl         = "<leader>sr",  -- 重启 REPL（关闭再重新打开）
-    send_motion          = "<leader>sc",  -- 发送当前行或选区
-    visual_send          = "<leader>sv",  -- 选中后发送
-    send_file            = "<leader>sf",  -- 发送整个文件
-    send_line            = "<leader>sl",  -- 发送当前行
-    send_until_cursor    = "<leader>su",  -- 发送到光标所在行
-    send_paragraph       = "<leader>sp",  -- 发送当前段落
-    send_mark            = "<leader>sm",  -- 发送到上次标记的位置
-    mark_motion          = "<leader>mm",  -- 用 motion 设置发送范围标记
-    mark_visual          = "<leader>mv",  -- 在可视模式下设置标记
-    remove_mark          = "<leader>md",  -- 删除发送标记
-    cr                   = "<leader>cr",  -- 在 REPL 中发送回车
-    interrupt            = "<leader>si",  -- 中断内核运行（Ctrl-C）
-    exit                 = "<leader>sq",  -- 退出 REPL
-    clear                = "<leader>cl",  -- 清屏
+    toggle_repl       = "gt",  -- g + t 打开/关闭 REPL (t = toggle)
+    restart_repl      = "gr",  -- g + r 重启 REPL (r = restart)
+    send_line         = "gs",  -- g + s 发送当前行 (s = send)
+    visual_send       = "gv",  -- g + v 发送可视选区 (v = visual)
+    send_file         = "gp",  -- g + f 发送全文件 (p = pager)
+    send_until_cursor = "gu",  -- g + u 发送到光标 (u = until)
+    interrupt         = "gi",  -- g + i 中断内核 (i = interrupt)
+    exit              = "gq",  -- g + q 退出 REPL (q = quit)
   },
 }
+
+-- Neo-tree 核心配置
+require("neo-tree").setup({
+  close_if_last_window = true,       -- 关闭最后一个窗口时一起退出 Neo-tree
+  enable_git_status = true,          -- 显示 Git 状态
+  enable_diagnostics = true,         -- 显示 Diagnostics（LSP 报错）
+  popup_border_style = "rounded",    -- 浮动窗口的边框样式
+
+  filesystem = {
+    hijack_netrw_behavior = "open_default",  -- 劫持 netrw，打开目录用 Neo-tree
+    follow_current_file = true,              -- 光标文件变化时自动展开到对应节点
+    use_libuv_file_watcher = true,           -- 用更高效的文件监听刷新树
+
+    filtered_items = {
+      hide_dotfiles = false,     -- 隐藏 ·开头 文件
+      hide_gitignored = true,    -- 隐藏被 .gitignore 的文件
+      never_show = { ".DS_Store" },
+    },
+  },
+
+  window = {
+    position = "left",
+    width    = 30,
+    mappings = {
+      ["<cr>"] = "open",
+      ["o"]    = "open",
+      ["a"]    = "add",
+      ["d"]    = "delete",
+      ["r"]    = "rename",
+      ["<space>"] = "toggle_node",
+    },
+  },
+
+  -- 打开文件时自动关闭 Neo-tree
+  commands = {
+    open = function(state)
+      require("neo-tree.commands").open(state)
+      vim.cmd("wincmd p")  -- 切回上一个窗口
+    end,
+  },
+})
+
+-- VimEnter 时，如果参数是一个目录，则自动启动 Neo-tree
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function(data)
+    if vim.fn.isdirectory(data.file) == 1 then
+      require("neo-tree.command").execute({ source = "filesystem" })
+    end
+  end,
+})
+
+-- 全局快捷键，手动切换 Neo-tree
+vim.keymap.set("n", "<C-n>", "<cmd>Neotree toggle<cr>", { desc = "Toggle Neo-tree" })
