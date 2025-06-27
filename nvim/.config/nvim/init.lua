@@ -223,76 +223,77 @@ iron.setup {
   },
 }
 
--- 先确保加载了 Iron 和 ToggleTerm
-local Terminal = require("toggleterm.terminal").Terminal
+-- 确保已加载 Iron
+local uv   = vim.loop
 
--- 这个函数在 REPL 窗口中打开 VisiData
-local function open_visidata_below_repl(tmp_path, vd_exe)
-  -- 1) 找到 filetype=iron 的窗口
-  local repl_win
-  for _, win in ipairs(vim.api.nvim_list_wins()) do
-    local buf = vim.api.nvim_win_get_buf(win)
-    if vim.bo[buf].filetype == "iron" then
-      repl_win = win
-      break
-    end
+-- 配置（可在 init.lua 中覆盖）
+vim.g.visidata_tmp_dir_remote    = vim.g.visidata_tmp_dir_remote or "/home/dengjinqiu/tmp/"
+vim.g.visidata_tmp_dir_local     = vim.g.visidata_tmp_dir_local or "~/tmp/"
+vim.g.visidata_wait_timeout_secs = vim.g.visidata_wait_timeout_secs or 30
+
+-- 异步等待 CSV 文件生成
+local function wait_for_file(path, callback)
+  local start = uv.now()
+  local function check()
+    uv.fs_stat(path, function(err, stat)
+      if stat then
+        vim.schedule(function() callback(true) end)
+      else
+        if (uv.now() - start) / 1000 > vim.g.visidata_wait_timeout_secs then
+          vim.schedule(function()
+            vim.notify("❌ 等待 CSV 生成超时（" .. vim.g.visidata_wait_timeout_secs .. "s）", vim.log.levels.ERROR)
+          end)
+        else
+          vim.defer_fn(check, 200)
+        end
+      end
+    end)
   end
-  if not repl_win then
-    vim.notify("找不到 iron REPL 窗口", vim.log.levels.ERROR)
-    return
-  end
-
-  -- 2) 切到 REPL 窗口
-  local prev_win = vim.api.nvim_get_current_win()
-  vim.api.nvim_set_current_win(repl_win)
-
-  -- 3) 在 REPL 窗口下方水平分屏并打开 terminal
-  vim.cmd("belowright split")
-  vim.cmd("wincmd j")  -- 切到下方新窗
-  vim.cmd("resize 15") -- 固定高度为 15 行，可按需调整
-  vim.cmd(string.format("terminal %s -f csv %s", vd_exe, vim.fn.shellescape(tmp_path)))
-  vim.cmd("startinsert")
-
-  -- 4) 切回原来编辑窗口
-  vim.api.nvim_set_current_win(prev_win)
+  check()
 end
 
--- 针对 Python / Iron REPL buffer，创建可视模式下的 <leader>vd 映射
+-- 主函数：远程导出 DataFrame 为 CSV，完成后通过 tmux 下方窗口打开
+local function show_visidata_tmux(var)
+  if var == "" then
+    return vim.notify("⚠️ 没有选中变量名", vim.log.levels.WARN)
+  end
+
+  -- 生成唯一文件名
+  local filename = tostring(os.time()) .. ".csv"
+  local remote_fp = vim.g.visidata_tmp_dir_remote .. filename
+  local local_fp  = vim.fn.expand(vim.g.visidata_tmp_dir_local .. filename)
+
+  -- 发送导出命令到远端 Python
+  local cmd = string.format("%s.to_csv('%s', index=False)", var, remote_fp)
+  iron.send(nil, {cmd})
+  vim.notify("🔍 已发送导出命令: " .. cmd, vim.log.levels.INFO)
+
+  -- 文件生成后，使用 tmux split-window 在 vim 下方打开 VisiData
+  wait_for_file(local_fp, function()
+    local tmux_cmd = string.format(
+      "tmux split-window -v -p 20 'vd -f csv %s'",
+      local_fp
+    )
+    vim.fn.system(tmux_cmd)
+    vim.notify("✅ CSV 已生成，已在 tmux 下方新窗打开 VisiData", vim.log.levels.INFO)
+  end)
+end
+
+-- 自动命令：在 Python 编辑面板，为可视模式映射 <leader>vd
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = "python",
+  pattern = {"python"},
   callback = function(args)
-    -- 删除旧映射，防止重复
+    -- 仅在 Python 缓冲区生效
+    if vim.bo[args.buf].filetype ~= "python" then return end
+
+    -- 删除已有映射
     pcall(vim.api.nvim_buf_del_keymap, args.buf, 'v', '<leader>vd')
 
     vim.keymap.set("v", "<leader>vd", function()
-      -- 1) 把选中的文本 yank 到寄存器 z，取出变量名
       vim.cmd('normal! "zy')
-      local var = vim.fn.getreg('z'):gsub("%s+","")
-      if var == "" then
-        vim.notify("⚠️ 没有选中变量名", vim.log.levels.WARN)
-        return
-      end
-
-      -- 2) 远端执行 to_csv，把 CSV 写到 /home/dengjinqiu/tmp/tmp.csv
-      local remote_cmd = var .. ".to_csv('/home/dengjinqiu/tmp/tmp.csv', index=False)"
-      iron.send(nil, { remote_cmd })
-      vim.notify("🔍 已发送导出命令: " .. remote_cmd, vim.log.levels.INFO)
-
-      -- 3) 本地等待该文件出现
-      local local_path = vim.fn.expand("~/tmp/tmp.csv")
-      local vd_exe     = "/Users/dengjinqiu/opt/anaconda3/bin/vd"
-
-      local function wait_and_show()
-        if vim.fn.filereadable(local_path) == 1 then
-          open_visidata_below_repl(local_path, vd_exe)
-          vim.notify("✅ CSV 已生成，VData 在 REPL 下方打开", vim.log.levels.INFO)
-        else
-          vim.defer_fn(wait_and_show, 200)
-        end
-      end
-
-      wait_and_show()
-    end, { buffer=true, silent=true, desc="导出 DF 并在 VisiData 中查看" })
+      local var = vim.fn.getreg('z'):gsub("%s+", "")
+      show_visidata_tmux(var)
+    end, { buffer=true, silent=true, desc="导出 DF 并在 tmux 下方查看" })
   end,
 })
 
