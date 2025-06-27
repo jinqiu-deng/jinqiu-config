@@ -25,18 +25,18 @@ export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bott
 # 检查并启动到 cpu-ea 的 Jupyter 隧道
 function ensure_ea_tunnel() {
   # 检测本地是否已有监听 57499 端口的进程
-  if lsof -iTCP:57499 -sTCP:LISTEN >/dev/null 2>&1; then
+  if lsof -iTCP:54477 -sTCP:LISTEN >/dev/null 2>&1; then
     # Tunnel 已存在
     :
   else
     echo "▶️ 为连接远程jupyter kernal 启动 cpu-ea SSH 隧道..."
     ssh -fN \
-      -L 57499:127.0.0.1:57499 \
-      -L 45013:127.0.0.1:45013 \
-      -L 58863:127.0.0.1:58863 \
-      -L 45395:127.0.0.1:45395 \
-      -L 37653:127.0.0.1:37653 \
-      cpu-ea
+      -L 54477:127.0.0.1:54477 \
+      -L 55261:127.0.0.1:55261 \
+      -L 46813:127.0.0.1:46813 \
+      -L 59203:127.0.0.1:59203 \
+      -L 59029:127.0.0.1:59029 \
+      gpu-ea
   fi
 }
 
