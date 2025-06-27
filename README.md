@@ -64,8 +64,12 @@ nvim
 
 notebook
 1. 需要有一个可以运行的ipython kernal，比如在远程机器上
-2. 需要把远程kernal的json文件复制到本地，并在vim配置里通过iron连接
-3. 需要再本地建立ssh到远程机器的tunnel，这样才能通过iron连接到ipython kernal。（再本地zshrc自动连接）
+2. 需要把远程kernal的json文件复制到本地
+3. 建立ssh tunnel 到远程机器的ipython kernal端口，这样才能通过iron连接到ipython kernal。
+4. iron在发送代码块到kernal的时候比较麻烦，主要是需要禁止系统自动在前面加额外的缩进。
+5. 由于iron的返回值就是写到纯文本的buffer里，图和表没有好方法展示。
+    表：将变量保存成csv存在远程电脑，再远程挂载会本地，用tmux打开
+    图：目前就是一个单独弹窗
 
 gpu自动运行脚本
 为了提升GPU利用率，在ssh连接时自动运行gpu_matrix_multi.py
