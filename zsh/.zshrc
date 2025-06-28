@@ -22,35 +22,19 @@ export PATH="/usr/local/bin:$PATH"
 export JAVA_HOME=$(/usr/libexec/java_home)
 export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
 
-# 只在本地交互式（interactive）且非 SSH 会话时执行
-if [[ -o interactive ]] && [[ -z "$SSH_CONNECTION" ]]; then
-  # 1) 启动 Jupyter 隧道（如果还没启动）
-  if ! lsof -iTCP:54477 -sTCP:LISTEN >/dev/null 2>&1; then
-    echo "▶️ 启动到 gpu-ea 的 Jupyter SSH 隧道..."
-    ssh -fN \
-      -L 54477:127.0.0.1:54477 \
-      -L 55261:127.0.0.1:55261 \
-      -L 46813:127.0.0.1:46813 \
-      -L 59203:127.0.0.1:59203 \
-      -L 59029:127.0.0.1:59029 \
-      gpu-ea
+# 本地会话（非 SSH）：检查并启动 local_watchdog
+if [[ -z "$SSH_CONNECTION" ]]; then
+  if ! pgrep -f "local_watchdog\.sh" >/dev/null 2>&1; then
+    echo "[local_watchdog] 未检测到运行，启动中…"
+    nohup ~/local_watchdog.sh >/dev/null 2>&1 &
   fi
 
-  # 如果 ~/tmp 尚未挂载，就创建目录并挂载
-  if ! mount | grep 'dengjinqiu/tmp' >/dev/null 2>&1; then
-    echo "▶️ 本地会话，挂载 gpu-ea:/home/dengjinqiu/tmp 到 ~/tmp"
-    mkdir -p ~/tmp
-    nohup sshfs -o reconnect,ServerAliveInterval=15 \
-      dengjinqiu@gpu-ea:/home/dengjinqiu/tmp \
-      ~/tmp \
-      > /dev/null 2>&1 &
+# 远程会话（SSH）：检查并启动 remote_watchdog
+elif [[ -n "$SSH_CONNECTION" ]]; then
+  if ! pgrep -f "remote_watchdog\.sh" >/dev/null 2>&1; then
+    echo "[remote_watchdog] 未检测到运行，启动中…"
+    nohup ~/remote_watchdog.sh >/dev/null 2>&1 &
   fi
-fi
-
-# 在 SSH 会话且脚本未运行时，后台启动 gpu_matrix_multi.py
-if [[ -n "$SSH_CONNECTION" ]] && ! pgrep -f "gpu_matrix_multi\.py" >/dev/null; then
-  echo "▶️ 启动 gpu_matrix_multi.py 后台任务..."
-  nohup python "$HOME/gpu_matrix_multi.py" >/dev/null 2>&1 &
 fi
 
 # Set name of the theme to load. Optionally, if you set this to "random"
