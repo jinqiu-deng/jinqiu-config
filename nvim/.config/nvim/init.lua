@@ -122,6 +122,16 @@ vim.cmd([[
   nmap <Leader>d <Plug>(easymotion-j)
 ]])
 
+
+-- ------------ notebook: 编辑ipynb --------------------------
+require('notebook').setup{
+  -- 默认为 true，你可以按需开启/关闭
+  insert_blank_line = true,
+  show_index        = true,
+  show_cell_type    = true,
+  virtual_text_style= { fg = "lightblue", italic = true },
+}
+
 -- ------------ tagbar: 代码结构树 ------------------------------
 vim.keymap.set('n', '<F8>', ':TagbarToggle<CR>', {desc = "Toggle Tagbar"})
 
@@ -200,7 +210,7 @@ iron.setup {
         -- 连接到已经跑在后台的 kernel
         command = {
           "bash", "-lc",
-          "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernel-cpu-ea.json"
+          "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernel-jinqiu-ea.json"
         },
         format = common.bracketed_paste,
       },
