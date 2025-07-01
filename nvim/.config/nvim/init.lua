@@ -107,7 +107,6 @@ require("colorful-winsep").setup({
 vim.api.nvim_set_hl(0, "VertSplit",    { fg = "#6272A4" })  -- vivid slate-blue :contentReference[oaicite:5]{index=5}
 vim.api.nvim_set_hl(0, "WinSeparator", { fg = "#6272A4" })
 
-
 -- 不自动加注释前缀，确保在 filetype plugin indent on 之后
 vim.api.nvim_create_augroup('NoCommentContinuation', { clear = true })
 vim.api.nvim_create_autocmd('FileType', {
@@ -255,10 +254,8 @@ iron.setup {
       python = {
         -- 连接到已经跑在后台的 kernel
         command = {
-          -- 用 env 确保 NO_COLOR 直接传给 jupyter
-          "env", "NO_COLOR=1",
-          "jupyter", "console", "--existing",
-          "/Users/dengjinqiu/.local/share/jupyter/runtime/kernel-jinqiu-ea.json"
+          "bash", "-lc",
+          "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernel-jinqiu-ea.json"
         },
         format = common.bracketed_paste,
       },
