@@ -22,15 +22,15 @@ export PATH="/usr/local/bin:$PATH"
 export JAVA_HOME=$(/usr/libexec/java_home)
 export HOMEBREW_BOTTLE_DOMAIN=https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
 
-# 本地会话（非 SSH）：检查并启动 local_watchdog
-if [[ -z "$SSH_CONNECTION" ]]; then
+# 登录本地机器时，启动 local_watchdog.sh
+if [[ "$(hostname)" == "ZBMAC-9391cdfab" ]]; then
   if ! pgrep -f "local_watchdog\.sh" >/dev/null 2>&1; then
     echo "[local_watchdog] 未检测到运行，启动中…"
     nohup ~/local_watchdog.sh >/dev/null 2>&1 &
   fi
 
-# 远程会话（SSH）：检查并启动 remote_watchdog
-elif [[ -n "$SSH_CONNECTION" ]]; then
+# 登录远程GPU机器，启动 remote_watchdog.sh
+elif [[ "$(hostname)" == "nb-dengjinqiu-jinqiu" ]]; then
   if ! pgrep -f "remote_watchdog\.sh" >/dev/null 2>&1; then
     echo "[remote_watchdog] 未检测到运行，启动中…"
     nohup ~/remote_watchdog.sh >/dev/null 2>&1 &
