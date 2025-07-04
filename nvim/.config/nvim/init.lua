@@ -67,7 +67,7 @@ vim.g.terminal_color_11 = "#15C07B"
 require("tokyonight").setup({
   terminal_colors = true,
   style = "moon",
-  transparent = false,
+  transparent = true,
   colors = {
     yellow        = "#15C07B",  -- 常规黄
     bright_yellow = "#15C07B",  -- 亮黄
@@ -281,7 +281,7 @@ iron.setup {
 -- 每次打开终端缓冲时触发，设置 jupyter console 的颜色
 vim.api.nvim_create_autocmd("TermOpen", {
   -- 匹配所有打开了 “jupyter console” 的终端缓冲
-  pattern = "term://*jupyter*",
+  pattern = "term://*bash*",
   callback = function(args)
     -- 拿到该终端的 job id
     local chan = vim.b.terminal_job_id
@@ -295,7 +295,7 @@ local uv   = vim.loop
 
 -- 配置（可在 init.lua 中覆盖）
 vim.g.visidata_tmp_dir_remote    = vim.g.visidata_tmp_dir_remote or "/home/dengjinqiu/tmp/"
-vim.g.visidata_tmp_dir_local     = vim.g.visidata_tmp_dir_local or "~/tmp/"
+vim.g.visidata_tmp_dir_local     = vim.g.visidata_tmp_dir_local or "~/remote_dengjinqiu/tmp/"
 vim.g.visidata_wait_timeout_secs = vim.g.visidata_wait_timeout_secs or 30
 
 -- 异步等待 CSV 文件生成
@@ -394,6 +394,8 @@ require("neo-tree").setup({
     width    = 30,
     mappings = {
       ["<cr>"] = "open",
+      ["<C-v>"]   = "open_vsplit",  -- Ctrl+V 垂直分屏打开文件 :contentReference[oaicite:2]{index=2}
+      ["<C-x>"]   = "open_split",   -- Ctrl+X 水平分屏打开文件 :contentReference[oaicite:3]{index=3}
       ["o"]    = "open",
       ["a"]    = "add",
       ["d"]    = "delete",
@@ -552,6 +554,40 @@ if is_local() then
       cwd = vim.loop.cwd(),
     })
   end, { desc = '文件浏览器' })
-
-
 end
+
+-- ------------ vim-nerdcommenter: 注释增强 ----------------------
+-- 先禁用默认映射
+vim.g.NERDCreateDefaultMappings = 0
+
+-- 普通模式
+vim.api.nvim_set_keymap(
+  'n',
+  '<leader>cc',
+  '<plug>NERDCommenterToggle',
+  { noremap = false, silent = true }
+)
+-- 可视模式
+vim.api.nvim_set_keymap(
+  'x',
+  '<leader>cc',
+  '<plug>NERDCommenterToggle',
+  { noremap = false, silent = true }
+)
+
+-- ------------ 插入注释块 [leader]cb ------------------
+vim.keymap.set('n', '<leader>cb', function()
+  vim.api.nvim_put({
+    "##############################################################################",
+    "#%% ",
+    "##############################################################################"
+  }, 'l', true, true)
+end, { noremap = true, silent = true, desc = "Insert ###… block with #%%" })
+
+
+-- ------------ vim-visual-multi: 多光标编辑 ----------------------
+-- 在普通模式下，Ctrl+方向键 调整窗口大小
+vim.keymap.set('n', '<A-Left>',  ':vertical resize -2<CR>', { silent = true })
+vim.keymap.set('n', '<A-Right>', ':vertical resize +2<CR>', { silent = true })
+vim.keymap.set('n', '<A-Up>',    ':resize +2<CR>',          { silent = true })
+vim.keymap.set('n', '<A-Down>',  ':resize -2<CR>',          { silent = true })

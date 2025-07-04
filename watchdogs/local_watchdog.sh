@@ -18,17 +18,30 @@ while true; do
     echo "  → SSH 隧道已启动 (PID=$(pgrep -f 'ssh -fN.*gpu-ea'))"
   fi
 
-  # 2) 检查并启动 sshfs 挂载
-  if ! mount | grep 'dengjinqiu/tmp' >/dev/null 2>&1; then
-    echo "  → sshfs 未挂载，开始挂载 gpu-ea:/home/dengjinqiu/tmp 到 ~/tmp"
-    mkdir -p ~/tmp
+  # 2) 检查并启动 sshfs 挂载：挂载两个目录
+  # 2a) /home/dengjinqiu -> ~/remote_dengjinqiu
+  if ! mount | grep "remote_dengjinqiu" >/dev/null 2>&1; then
+    echo "  → sshfs 未挂载 /home/dengjinqiu，开始挂载到 ~/remote_dengjinqiu..."
+    mkdir -p "${HOME}/remote_dengjinqiu"
     nohup sshfs -o reconnect,ServerAliveInterval=15 \
-      dengjinqiu@gpu-ea:/home/dengjinqiu/tmp \
-      ~/tmp \
+      dengjinqiu@gpu-ea:/media/cfs/dengjinqiu \
+      "${HOME}/remote_dengjinqiu" \
       >/dev/null 2>&1 &
-    echo "  → sshfs 已挂载."
+    echo "  → 已挂载 /home/dengjinqiu."
+  fi
+
+  # 2b) /media/cfs/ytech-gpu/pricing -> ~/remote_pricing
+  if ! mount | grep "remote_pricing" >/dev/null 2>&1; then
+    echo "  → sshfs 未挂载 /media/cfs/ytech-gpu/pricing，开始挂载到 ~/remote_pricing..."
+    mkdir -p "${HOME}/remote_pricing"
+    nohup sshfs -o reconnect,ServerAliveInterval=15 \
+      dengjinqiu@gpu-ea:/media/cfs/ytech-gpu/pricing \
+      "${HOME}/remote_pricing" \
+      >/dev/null 2>&1 &
+    echo "  → 已挂载 /media/cfs/ytech-gpu/pricing."
   fi
 
   # 等待下次检查
   sleep "${SLEEP_INTERVAL}"
+
 done
