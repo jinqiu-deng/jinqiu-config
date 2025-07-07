@@ -206,6 +206,7 @@ vim.keymap.set('n', '<Leader>u', ':UndotreeToggle<CR>')
 -- ------------ vim-rooter: 自动切换项目根目录 -----------------
 vim.g.rooter_change_directory_for_non_project_files = 'home'
 vim.g.rooter_silent_chdir = 1
+vim.g.rooter_change_directory_for_non_project_files = ''
 
 -- ------------ vim-json: JSON 支持 -----------------------------
 vim.g.vim_json_syntax_conceal = 0

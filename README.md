@@ -47,6 +47,7 @@ bullet train的 theme在oh-my-shell下
 远程需要把ClashX的port关掉
 在当前默认shell的启动项里加入，以便自动启动zsh
 
+    export JUPYTERHUB_USER=dengjinqiu
     export LD_LIBRARY_PATH="$HOME/.local/lib64:$HOME/.local/lib:$LD_LIBRARY_PATH"
     export PATH="$HOME/.local/bin:$PATH"
     # 只有在这台机器（hostname 为 nb-dengjinqiu-jinqiu）上，才切到 zsh 登录 shell
