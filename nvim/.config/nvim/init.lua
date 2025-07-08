@@ -190,7 +190,8 @@ vim.g.indentLine_color_term = 239
 -- 直接 :Tabularize /pattern/
 
 -- ------------ vim-better-whitespace: 多余空白可视化 ----------
--- 用 :StripWhitespace 清理
+-- 关闭 vim-better-whitespace 的高亮，太多人写的代码有多余空格
+vim.g.better_whitespace_enabled = 0
 
 -- ------------ undotree: 撤销树 + 持久化撤销 -------------------
 if vim.fn.has('persistent_undo') == 1 then

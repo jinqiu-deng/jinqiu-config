@@ -30,7 +30,7 @@ if [[ "$(hostname)" == "ZBMAC-9391cdfab" ]]; then
   fi
 
 # 登录远程GPU机器，启动 remote_watchdog.sh
-elif [[ "$(hostname)" == "nb-dengjinqiu-jinqiu" ]]; then
+elif [[ "$(hostname)" == "nb-dengjinqiu-jinqiu-gpu" ]]; then
   if ! pgrep -f "remote_watchdog\.sh" >/dev/null 2>&1; then
     echo "[remote_watchdog] 未检测到运行，启动中…"
     nohup ~/remote_watchdog.sh >/dev/null 2>&1 &
