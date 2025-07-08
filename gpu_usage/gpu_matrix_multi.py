@@ -6,7 +6,7 @@ def main():
     num = torch.npu.device_count()
     print(f"检测到 {num} 张 NPU 卡")
     N = 8192
-    sleep_time = 0.01  # 每轮结束后的休眠时间（秒），可按需调整
+    sleep_time = 60*30  # 每轮结束后的休眠时间（秒），可按需调整
 
     # 预先为每张卡创建两个矩阵
     devices = [torch.device(f"npu:{i}") for i in range(num)]
