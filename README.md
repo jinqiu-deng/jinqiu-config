@@ -47,11 +47,16 @@ bullet train的 theme在oh-my-shell下
 远程需要把ClashX的port关掉
 在当前默认shell的启动项里加入，以便自动启动zsh
 
-    export JUPYTERHUB_USER=dengjinqiu
-    export LD_LIBRARY_PATH="$HOME/.local/lib64:$HOME/.local/lib:$LD_LIBRARY_PATH"
+    export PYTHONPATH="/software/servers/10k/mart_scr/spark_3.4/python:/software/servers/10k/mart_scr/spark_3.4/python/lib/py4j-0.10.9-src.zip:$HOME/.pylib/lib/python3.10/site-packages:$PYTHONPATH"
     export PATH="$HOME/.local/bin:$PATH"
+    export LD_LIBRARY_PATH="$HOME/.local/lib64:$HOME/.local/lib:$HOME/.pylib/lib:$LD_LIBRARY_PATH"
+    
+    export SPARK_SERVICE_IP_SUPPORT="true"
+    export SPARK_HOME="/software/servers/10k/mart_scr/spark_3.4"
+    export JUPYTERHUB_USER=dengjinqiu
+    
     # 只有在这台机器（hostname 为 nb-dengjinqiu-jinqiu）上，才切到 zsh 登录 shell
-    if [[ "$(hostname)" == "nb-dengjinqiu-jinqiu" ]]; then
+    if [[ "$(hostname)" == "nb-dengjinqiu-jinqiu-gpu" ]]; then
       exec zsh -l
     fi
 
