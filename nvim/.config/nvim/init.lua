@@ -216,6 +216,21 @@ vim.g.vim_json_syntax_conceal = 0
 local iron = require("iron.core")
 local common = require("iron.fts.common")
 
+-- 重写 visual-send：发送选区，并在末尾插入两行空白以触发“第三次回车”执行
+local function send_visual_selection()
+  -- 1) 先发送选区
+  iron.visual_send()
+  -- 2) 再发送两行空串，确保 REPL 收到收尾空行以触发执行
+  iron.send(nil, { "", "" })
+end
+
+-- 重新映射：在普通模式选中后，按 <leader>gv 就会调用上面的函数
+vim.keymap.set('v', '<leader>gv', send_visual_selection, {
+  noremap = true,
+  silent = true,
+  desc   = "Iron.nvim: send visual selection + extra blank lines"
+})
+
 -- Send the "cell" delimited by #%% markers
 local function send_current_cell()
   local bufnr  = vim.api.nvim_get_current_buf()
@@ -272,7 +287,6 @@ iron.setup {
     toggle_repl       = "gt",  -- g + t 打开/关闭 REPL (t = toggle)
     restart_repl      = "gr",  -- g + r 重启 REPL (r = restart)
     send_line         = "gs",  -- g + s 发送当前行 (s = send)
-    visual_send       = "gv",  -- g + v 发送可视选区 (v = visual)
     send_file         = "gp",  -- g + f 发送全文件 (p = pager)
     send_until_cursor = "gu",  -- g + u 发送到光标 (u = until)
     interrupt         = "gi",  -- g + i 中断内核 (i = interrupt)
@@ -334,7 +348,7 @@ local function show_visidata_tmux(var)
 
   -- 发送导出命令到远端 Python
   local cmd = string.format("%s.to_csv('%s', index=False)", var, remote_fp)
-  iron.send(nil, {cmd})
+  iron.send(nil, {cmd, "", ""})
   vim.notify("🔍 已发送导出命令: " .. cmd, vim.log.levels.INFO)
 
   -- 文件生成后，使用 tmux split-window 在 vim 下方打开 VisiData
@@ -476,8 +490,8 @@ if is_local() then
     },
     on_attach = function(bufnr)
       local gs = package.loaded.gitsigns
-      vim.keymap.set('n', ']h', gs.next_hunk,    {buffer=bufnr, desc="Next Git hunk"})
-      vim.keymap.set('n', '[h', gs.prev_hunk,    {buffer=bufnr, desc="Prev Git hunk"})
+      vim.keymap.set('n', '[d', gs.next_hunk,    {buffer=bufnr, desc="Next Git hunk"})
+      vim.keymap.set('n', '[e', gs.prev_hunk,    {buffer=bufnr, desc="Prev Git hunk"})
       vim.keymap.set('n', '<leader>hp', gs.preview_hunk, {buffer=bufnr, desc="Preview Git hunk"})
       vim.keymap.set('n', '<leader>tb', '<cmd>Gitsigns toggle_current_line_blame<CR>', {buffer=bufnr})
       vim.keymap.set('n', '<leader>gb', '<cmd>Gitsigns blame_line<CR>', {buffer=bufnr})
@@ -488,6 +502,7 @@ if is_local() then
   local icons = require('nvim-nonicons')
   require('telescope').setup {
     defaults = {
+      file_ignore_patterns = { ".git/" },
       prompt_prefix = "  " .. icons.get("telescope") .. "  ",
       selection_caret = "  " .. icons.get("arrow_right") .. "  ",
       entry_prefix = "   ",
