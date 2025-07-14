@@ -231,6 +231,21 @@ vim.keymap.set('v', '<leader>gv', send_visual_selection, {
   desc   = "Iron.nvim: send visual selection + extra blank lines"
 })
 
+-- 重写 gd：发送清空选区并加上两行空白
+local function send_clear_and_blank()
+  -- 1) 清空当前的选择（可以是一个单行命令，或者按需扩展）
+  iron.send(nil, { "%clear" })
+  -- 2) 再发送两行空串，确保 REPL 收到收尾空行以触发执行
+  iron.send(nil, { "", "" })
+end
+
+-- 重新映射：在普通模式按下 <leader>gd 就会发送清空并加两个空行
+vim.keymap.set('n', '<leader>gd', send_clear_and_blank, {
+  noremap = true,
+  silent = true,
+  desc   = "Iron.nvim: send clear and extra blank lines"
+})
+
 -- Send the "cell" delimited by #%% markers
 local function send_current_cell()
   local bufnr  = vim.api.nvim_get_current_buf()
