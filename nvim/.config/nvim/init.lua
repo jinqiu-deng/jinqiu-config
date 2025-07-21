@@ -362,7 +362,7 @@ local function show_visidata_tmux(var)
   local local_fp  = vim.fn.expand(vim.g.visidata_tmp_dir_local .. filename)
 
   -- 发送导出命令到远端 Python
-  local cmd = string.format("%s.to_csv('%s', index=False)", var, remote_fp)
+  local cmd = string.format("%s.to_csv('%s', index=False, encoding='utf_8_sig')", var, remote_fp)
   iron.send(nil, {cmd, "", ""})
   vim.notify("🔍 已发送导出命令: " .. cmd, vim.log.levels.INFO)
 
