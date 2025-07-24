@@ -623,3 +623,19 @@ vim.keymap.set('n', '<A-Left>',  ':vertical resize -2<CR>', { silent = true })
 vim.keymap.set('n', '<A-Right>', ':vertical resize +2<CR>', { silent = true })
 vim.keymap.set('n', '<A-Up>',    ':resize +2<CR>',          { silent = true })
 vim.keymap.set('n', '<A-Down>',  ':resize -2<CR>',          { silent = true })
+
+-- ──────────────────────────────────────────────────────────────────────────────
+-- 插件：GitHub Copilot（假设你用的是 github/copilot.vim）
+-- ──────────────────────────────────────────────────────────────────────────────
+
+-- 1) 把 <Tab> 映射为 Vim 自带的关键字补全（等同于 <C-n>）
+vim.keymap.set('i', '<Tab>', '<C-n>', { noremap = true, silent = true })
+
+-- 2) 把 <C-n> 用来接收 Copilot 的补全建议
+--    这里调用 copilot.vim 提供的 copilot#Accept() 函数
+vim.api.nvim_set_keymap(
+  'i',
+  '<C-n>',
+  'copilot#Accept("\\<CR>")',
+  { silent = true, expr = true }
+)
