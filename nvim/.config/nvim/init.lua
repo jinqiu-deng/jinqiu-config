@@ -106,6 +106,11 @@ require("colorful-winsep").setup({
 
 vim.api.nvim_set_hl(0, "VertSplit",    { fg = "#6272A4" })  -- vivid slate-blue :contentReference[oaicite:5]{index=5}
 vim.api.nvim_set_hl(0, "WinSeparator", { fg = "#6272A4" })
+vim.api.nvim_set_hl(0, "LineNr",       { fg = "#888888" })  -- 普通行号
+vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#FFD700", bold = true })  -- 当前行号高亮，金色加粗
+vim.api.nvim_set_hl(0, "CursorLine",   { bg = "#3E5F78" })  -- 比 #33475B 更亮、更偏青蓝
+vim.api.nvim_set_hl(0, "CursorColumn", { bg = "#3E5F78" })
+vim.api.nvim_set_hl(0, "Visual", { bg = "#745C9B" })  -- 比 #5C4E8C 更紫更明亮
 
 -- 不自动加注释前缀，确保在 filetype plugin indent on 之后
 vim.api.nvim_create_augroup('NoCommentContinuation', { clear = true })
@@ -588,25 +593,6 @@ if is_local() then
   end, { desc = '文件浏览器' })
 end
 
--- ------------ vim-nerdcommenter: 注释增强 ----------------------
--- 先禁用默认映射
-vim.g.NERDCreateDefaultMappings = 0
-
--- 普通模式
-vim.api.nvim_set_keymap(
-  'n',
-  '<leader>cc',
-  '<plug>NERDCommenterToggle',
-  { noremap = false, silent = true }
-)
--- 可视模式
-vim.api.nvim_set_keymap(
-  'x',
-  '<leader>cc',
-  '<plug>NERDCommenterToggle',
-  { noremap = false, silent = true }
-)
-
 -- ------------ 插入注释块 [leader]cb ------------------
 vim.keymap.set('n', '<leader>cb', function()
   vim.api.nvim_put({
@@ -616,26 +602,9 @@ vim.keymap.set('n', '<leader>cb', function()
   }, 'l', true, true)
 end, { noremap = true, silent = true, desc = "Insert ###… block with #%%" })
 
-
 -- ------------ vim-visual-multi: 多光标编辑 ----------------------
 -- 在普通模式下，Ctrl+方向键 调整窗口大小
 vim.keymap.set('n', '<A-Left>',  ':vertical resize -2<CR>', { silent = true })
 vim.keymap.set('n', '<A-Right>', ':vertical resize +2<CR>', { silent = true })
 vim.keymap.set('n', '<A-Up>',    ':resize +2<CR>',          { silent = true })
 vim.keymap.set('n', '<A-Down>',  ':resize -2<CR>',          { silent = true })
-
--- ──────────────────────────────────────────────────────────────────────────────
--- 插件：GitHub Copilot（假设你用的是 github/copilot.vim）
--- ──────────────────────────────────────────────────────────────────────────────
-
--- 1) 把 <Tab> 映射为 Vim 自带的关键字补全（等同于 <C-n>）
-vim.keymap.set('i', '<Tab>', '<C-n>', { noremap = true, silent = true })
-
--- 2) 把 <C-n> 用来接收 Copilot 的补全建议
---    这里调用 copilot.vim 提供的 copilot#Accept() 函数
-vim.api.nvim_set_keymap(
-  'i',
-  '<C-n>',
-  'copilot#Accept("\\<CR>")',
-  { silent = true, expr = true }
-)
