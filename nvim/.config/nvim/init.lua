@@ -518,6 +518,19 @@ if is_local() then
     end,
   }
 
+  -- 加深 gitsigns 当前行 Blame 的文字颜色
+  vim.api.nvim_set_hl(0, "GitSignsCurrentLineBlame", {
+    fg = "#888888",   -- 你可以根据喜好换成更深或更浅的十六进制色值
+    bg = nil,         -- 不改变背景
+    italic = true,    -- 可以根据需要启用/关闭斜体
+  })
+
+  vim.api.nvim_set_hl(0, "GitSignsCurrentLineBlameVirtText", {
+    fg = "#888888",
+    bg = nil,
+    italic = true,
+  })
+
   -- ---------------telescope.nvim: 模糊查找 + 扩展 --------------
   local icons = require('nvim-nonicons')
   require('telescope').setup {
