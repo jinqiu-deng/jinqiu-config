@@ -90,6 +90,22 @@ require("tokyonight").setup({
 vim.opt.background = "dark"
 vim.cmd("colorscheme tokyonight")
 
+-- 1) 取消弹窗半透明，避免漏底
+vim.opt.pumblend = 0
+vim.opt.winblend = 0
+
+-- 2) 统一补全菜单配色：整行纯黄
+local bg_base   = "#1a1b26"   -- 主题背景
+local bg_menu   = "#22304a"   -- 菜单底色
+local bg_select = "#FFD700"   -- 选中行底色（纯黄）
+
+vim.api.nvim_set_hl(0, "Pmenu",      { fg = "#c0caf5", bg = bg_menu })
+vim.api.nvim_set_hl(0, "PmenuSel",   { fg = bg_base,   bg = bg_select, bold = true })
+vim.api.nvim_set_hl(0, "PmenuSbar",  { bg = bg_menu })
+vim.api.nvim_set_hl(0, "PmenuThumb", { bg = "#7aa2f7" })
+vim.api.nvim_set_hl(0, "NormalFloat",{ bg = bg_menu })
+vim.api.nvim_set_hl(0, "FloatBorder",{ fg = "#6272A4", bg = bg_menu })
+
 -- ---------- 窗口分隔符颜色 ----------------
 require("colorful-winsep").setup({
   hi = {
