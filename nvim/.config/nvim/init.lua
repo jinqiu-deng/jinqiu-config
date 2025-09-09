@@ -186,7 +186,29 @@ require('notebook').setup{
 vim.keymap.set('n', '<F8>', ':TagbarToggle<CR>', {desc = "Toggle Tagbar"})
 
 -- ------------ nerdcommenter: 注释增强 -------------------------
-vim.g.NERDSpaceDelims = 1
+-- 1) 禁用 NERDCommenter 默认键位（必须在插件加载前）
+vim.g.NERDCreateDefaultMappings = 0
+
+-- 3) 清掉可能已存在的默认 \cc，再重绑为 Toggle
+pcall(vim.keymap.del, 'n', '<leader>cc')
+pcall(vim.keymap.del, 'x', '<leader>cc')
+
+-- 4) 你的偏好：行注释 + 列首 + 空格 + 识别变体注释，保证能反注释
+vim.g.NERDUseAlternateDelims = 0      -- 不用 """ / --[[ ]] 这类块注释
+vim.g.NERDDefaultAlign       = 'left' -- 注释符顶到第1列
+vim.g.NERDSpaceDelims        = 1      -- 注释符后加空格（便于正确反注释）
+vim.g.NERDRemoveAltComs      = 1      -- 识别 ##、#  # 之类历史注释
+
+-- 可选兜底：显式指定常见语言为“行注释”
+vim.g.NERDCustomDelimiters = {
+  python = { left = '#',  right = '' },
+  lua    = { left = '--', right = '' },
+  sh     = { left = '#',  right = '' },
+}
+
+-- 5) 重新把 \cc 绑定到 Toggle（允许 remap 展开到 <Plug>）
+vim.keymap.set({'n','x'}, '<leader>cc', '<Plug>NERDCommenterToggle',
+  { silent = true, remap = true, desc = 'Toggle line comment (col 1)' })
 
 -- ------------ indentLine: 缩进线 ------------------------------
 vim.g.indentLine_color_term = 239
