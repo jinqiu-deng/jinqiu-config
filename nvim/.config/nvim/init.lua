@@ -659,3 +659,33 @@ vim.keymap.set('n', '<A-Left>',  ':vertical resize -2<CR>', { silent = true })
 vim.keymap.set('n', '<A-Right>', ':vertical resize +2<CR>', { silent = true })
 vim.keymap.set('n', '<A-Up>',    ':resize +2<CR>',          { silent = true })
 vim.keymap.set('n', '<A-Down>',  ':resize -2<CR>',          { silent = true })
+
+
+----------------------------------------------------------------------
+-- 每秒自动检测外部修改并自动重读当前 buffer （Neovim Lua 版）
+----------------------------------------------------------------------
+
+-- 确保打开了 autoread
+vim.opt.autoread = true
+
+-- 新建一个 libuv timer
+local uv = vim.loop
+local auto_reload_timer = uv.new_timer()
+
+-- 回调函数：当前 buffer 没有本地修改时，checktime
+local function auto_reload_cb()
+  -- 这个回调在另一个线程，需要切回 Neovim 主线程
+  vim.schedule(function()
+    -- 只在当前窗口的 buffer 未修改时自动重读
+    if not vim.bo.modified then
+      -- 可选：只对有文件名的普通文件生效
+      local name = vim.api.nvim_buf_get_name(0)
+      if name ~= "" and vim.fn.filereadable(name) == 1 then
+        vim.cmd("silent! checktime")
+      end
+    end
+  end)
+end
+
+-- 每 1000ms 执行一次
+auto_reload_timer:start(1000, 1000, auto_reload_cb)
