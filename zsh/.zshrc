@@ -201,3 +201,5 @@ unset __mamba_setup
 # <<< mamba initialize <<<
 
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
+export NO_PROXY="localhost,127.0.0.1,*.jd.local,jd.local"
