@@ -8,11 +8,11 @@ SLEEP_INTERVAL=3
 SSH_HOST="gpu-ea"
 
 PORTS=(
-    41203 # SSH 隧道检测端口1
-    51835 # SSH 隧道检测端口2
-    44279 # SSH 隧道检测端口3
-    34507 # SSH 隧道检测端口4
-    46221 # SSH 隧道检测端口5
+    39259 # SSH 隧道检测端口1
+    47661 # SSH 隧道检测端口2
+    46837 # SSH 隧道检测端口3
+    33461 # SSH 隧道检测端口4
+    45673 # SSH 隧道检测端口5
     6006  # TensorBoard 默认端口
     5000  # prvi的 Flask 端口
 )

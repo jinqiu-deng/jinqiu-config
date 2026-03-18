@@ -4,6 +4,10 @@ export HTTPS_PROXY="http://127.0.0.1:7890"
 # ClashX SOCKS5 代理端口
 export ALL_PROXY="socks5://127.0.0.1:7891"
 
+# jdcloud AI API 需要绕过代理
+export NO_PROXY="localhost,127.0.0.1,ai-api.jdcloud.com,jd.local,.jd.local"
+export no_proxy="$NO_PROXY"
+
 # If you come from bash you might have to change your $PATH.
 export PATH=/opt/homebrew/bin:/usr/local/bin:/usr/local/sbin:$HOME/bin:$PATH
 export PATH=/opt/homebrew/opt/mysql@5.7/bin:$PATH
@@ -202,4 +206,7 @@ unset __mamba_setup
 
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
-export NO_PROXY="localhost,127.0.0.1,*.jd.local,jd.local"
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
