@@ -330,7 +330,7 @@ iron.setup {
         -- 连接到已经跑在后台的 kernel
         command = {
           "bash", "-lc",
-          "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernel-jinqiu-ea.json"
+          "jupyter console --existing /Users/dengjinqiu/.local/share/jupyter/runtime/kernel-vim-connection.json"
         },
         format = common.bracketed_paste,
       },

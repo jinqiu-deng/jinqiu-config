@@ -6,13 +6,19 @@ SLEEP_INTERVAL=3
 
 # 1) 配置：远端主机与要映射的端口列表
 SSH_HOST="gpu-ea"
+SSH_OPTS=(
+    -fN
+    -o BatchMode=yes
+    -o ExitOnForwardFailure=yes
+    -o ServerAliveInterval=15
+)
 
 PORTS=(
-    39259 # SSH 隧道检测端口1
-    47661 # SSH 隧道检测端口2
-    46837 # SSH 隧道检测端口3
-    33461 # SSH 隧道检测端口4
-    45673 # SSH 隧道检测端口5
+    47981
+    51033
+    35957
+    55371
+    52039
     6006  # TensorBoard 默认端口
     5000  # prvi的 Flask 端口
 )
@@ -26,17 +32,30 @@ build_ssh_args() {
     echo "${args[@]}"
 }
 
+is_port_open() {
+    local port="$1"
+    nc -G 1 -z 127.0.0.1 "${port}" >/dev/null 2>&1
+}
+
 # 3) 通用函数：检查端口、启动隧道
 ensure_ssh_tunnel() {
     # 只要有任意一个端口没在 LISTEN，就重启整条隧道
     for p in "${PORTS[@]}"; do
-        if ! lsof -iTCP:"$p" -sTCP:LISTEN &>/dev/null; then
-            echo "  → 隧道缺失 (端口 $p 未监听)，重启 SSH 隧道..."
+        if ! is_port_open "$p"; then
+            echo "  → 隧道缺失 (端口 $p 不可连接)，重启 SSH 隧道..."
             # 关闭旧的（可选）
             pkill -f "ssh -fN.*${SSH_HOST}"
             # 启动新的
-            ssh -fN $(build_ssh_args) "${SSH_HOST}"
-            echo "  → SSH 隧道已启动 (PID=$(pgrep -f "ssh -fN.*${SSH_HOST}"))"
+            if ssh "${SSH_OPTS[@]}" $(build_ssh_args) "${SSH_HOST}"; then
+                sleep 1
+                if is_port_open "$p"; then
+                    echo "  → SSH 隧道已启动 (PID=$(pgrep -f "ssh -fN.*${SSH_HOST}"))"
+                else
+                    echo "  → SSH 隧道命令已返回，但端口 $p 仍不可连接。" >&2
+                fi
+            else
+                echo "  → SSH 隧道启动失败，请检查免密登录/网络/端口占用。" >&2
+            fi
             return
         fi
     done
