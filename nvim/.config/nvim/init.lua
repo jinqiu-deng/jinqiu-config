@@ -451,6 +451,26 @@ require("neo-tree").setup({
   enable_diagnostics = true,         -- 显示 Diagnostics（LSP 报错）
   popup_border_style = "rounded",    -- 浮动窗口的边框样式
 
+  default_component_configs = {
+    file_size = { enabled = false },
+    type = { enabled = false },
+    last_modified = { enabled = false },
+    created = { enabled = false },
+  },
+
+  renderers = {
+    directory = {
+      { "indent" },
+      { "icon" },
+      { "name", zindex = 10 },
+    },
+    file = {
+      { "indent" },
+      { "icon" },
+      { "name", zindex = 10 },
+    },
+  },
+
   filesystem = {
     hijack_netrw_behavior = "open_default",  -- 劫持 netrw，打开目录用 Neo-tree
     follow_current_file = true,              -- 光标文件变化时自动展开到对应节点
