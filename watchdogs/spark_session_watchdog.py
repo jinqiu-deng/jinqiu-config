@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -34,17 +35,19 @@ print(json.dumps({"spark_status": status}))
 
 def log(message: str) -> None:
     with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(f"[{datetime.now().strftime(\"%F %T\")] } {message}\n")
+        f.write(f"[{datetime.now().strftime('%F %T')}] {message}\\n")
 
 
-def find_jupyter_server_info() -> tuple[int | None, str | None]:
+def find_jupyter_server_info() -> tuple[str | None, int | None, str | None, str | None]:
     ps = subprocess.run(["ps", "-eo", "args"], capture_output=True, text=True, check=False)
     if ps.returncode != 0:
         log(f"ps failed: {ps.stderr.strip()}")
-        return None, None
+        return None, None, None
 
     token = None
     port = None
+    host = None
+    base_url = None
 
     for line in ps.stdout.splitlines():
         if "jupyter-lab" not in line and "jupyter-notebook" not in line and "jupyter-labhub" not in line:
@@ -57,8 +60,14 @@ def find_jupyter_server_info() -> tuple[int | None, str | None]:
         port_match = re.search(r"--port=(\d+)", line)
         if port_match:
             port = int(port_match.group(1))
+        ip_match = re.search(r"--ip=([^\s]+)", line)
+        if ip_match:
+            host = ip_match.group(1)
+        base_url_match = re.search(r"--ServerApp\.base_url=([^\s]+)", line)
+        if base_url_match:
+            base_url = base_url_match.group(1)
         if token:
-            return port or 8888, token
+            return host or "127.0.0.1", port or 8888, base_url or "/", token
 
     candidates = sorted(glob.glob(str(JUPYTER_RUNTIME_DIR / "jpserver-*.json")))
     for candidate in reversed(candidates):
@@ -67,15 +76,28 @@ def find_jupyter_server_info() -> tuple[int | None, str | None]:
                 data = json.load(f)
             token = token or data.get("token")
             port = port or data.get("port")
+            if not host and data.get("url"):
+                try:
+                    parsed = urllib.parse.urlparse(data.get("url"))
+                    host = host or parsed.hostname
+                except Exception:
+                    pass
+            if not base_url and data.get("url"):
+                try:
+                    parsed = urllib.parse.urlparse(data.get("url"))
+                    base_url = base_url or (parsed.path or "/")
+                except Exception:
+                    pass
             if token:
-                return int(port or 8888), token
+                return host or "127.0.0.1", int(port or 8888), base_url or "/", token
         except Exception:
             continue
-    return None, None
+    return None, None, None, None
 
 
-def list_active_jinqiu_sessions(jupyter_port: int, token: str) -> list[tuple[str, str]]:
-    url = f"http://127.0.0.1:{jupyter_port}/api/sessions?token={token}"
+def list_active_jinqiu_sessions(jupyter_host: str, jupyter_port: int, base_url: str, token: str) -> list[tuple[str, str]]:
+    base = base_url if base_url.endswith("/") else f"{base_url}/"
+    url = f"http://{jupyter_host}:{jupyter_port}{base}api/sessions?token={token}"
     req = urllib.request.Request(url)
     with urllib.request.urlopen(req, timeout=10) as resp:
         sessions = json.loads(resp.read().decode("utf-8"))
@@ -146,7 +168,7 @@ def ensure_spark(kernel_name: str, connection_id: str) -> None:
 from pyspark.sql import SparkSession
 import json
 spark = SparkSession.builder.appName("{kernel_name[:-6]}").getOrCreate()
-print(json.dumps({"spark_status": "active", "app_name": "{kernel_name[:-6]}"}))
+print(json.dumps({{"spark_status": "active", "app_name": "{kernel_name[:-6]}"}}))
 """
     rc, out, err = run_in_kernel(str(connection_file), create_code)
     status_after = parse_status(out)
@@ -173,13 +195,13 @@ def main() -> None:
             log(f"kernel exec script not found: {KERNEL_EXEC}")
             return
 
-        port, token = find_jupyter_server_info()
+        host, port, base_url, token = find_jupyter_server_info()
         if not token or not port:
             log("cannot find running jupyter server token/port")
             return
 
         try:
-            sessions = list_active_jinqiu_sessions(port, token)
+            sessions = list_active_jinqiu_sessions(host, port, base_url or "/", token)
         except urllib.error.URLError as e:
             log(f"failed to fetch jupyter sessions: {e}")
             return
